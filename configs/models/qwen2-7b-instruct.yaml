@@ -1,0 +1,10 @@
+# Qwen2-7B-Instruct (Yang et al., 2024) -- Appendix C.4 model.
+defaults:
+  - configs/default.yaml
+
+model:
+  key: qwen2-7b-instruct
+  label: Qwen2-7B-Instruct
+  model_id: Qwen/Qwen2-7B-Instruct
+  dtype: bfloat16
+  device_map: auto

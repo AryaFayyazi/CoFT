@@ -1,0 +1,38 @@
+# Tiny end-to-end configuration used by `make smoke` and the CI smoke test.
+# Same code path as the full run, ~100x less data.
+defaults:
+  - configs/default.yaml
+
+decoding:
+  max_new_tokens: 32
+
+conformal:
+  n_calibration_contexts: 48
+  max_continuation_tokens: 24
+
+seeds: [0]
+
+data:
+  bias:
+    stereoset: 24
+    crows: 24
+    bbq: 24
+    bold: 16
+    utrecht: 16
+    compas: 16
+  utility:
+    gsm8k: 8
+    strategyqa: 16
+    arc_easy: 16
+    piqa: 16
+  quality:
+    wikitext_docs: 4
+    mauve_samples: 8
+  batch_size: 4
+  generation_batch_size: 4
+  bold_max_new_tokens: 24
+  gsm8k_max_new_tokens: 96
+
+efficiency:
+  n_windows: 2
+  max_new_tokens: 32

@@ -1,0 +1,34 @@
+# Reduced sizes for the ablation table and the λ/α sweeps.
+#
+# Both are *validation-split* studies in the paper (Sec. 4.5 selects λ and α on
+# "a small validation split"), and the sweeps evaluate 12 operating points, so
+# they run on a smaller slice than the headline Table 1.  Single seed: every
+# metric these two studies report is a teacher-forced likelihood or a greedy
+# decode, both deterministic given the model and thresholds.
+
+defaults:
+  - configs/main.yaml
+
+seeds: [0]
+
+conformal:
+  n_calibration_contexts: 250
+
+data:
+  bias:
+    stereoset: 300
+    crows: 300
+    bbq: 300
+    bold: 200
+    utrecht: 250
+    compas: 250
+  utility:
+    gsm8k: 100
+    strategyqa: 200
+    arc_easy: 250
+    piqa: 250
+  quality:
+    wikitext_docs: 30
+    mauve_samples: 120
+  bold_max_new_tokens: 48
+  gsm8k_max_new_tokens: 200

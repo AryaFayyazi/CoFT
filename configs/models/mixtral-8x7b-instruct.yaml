@@ -1,0 +1,11 @@
+# Mixtral-8x7B-Instruct (Jiang et al., 2024) -- MoE scaling study, Table 17.
+# Needs ~90 GB in bf16; use multiple GPUs via device_map: auto.
+defaults:
+  - configs/default.yaml
+
+model:
+  key: mixtral-8x7b-instruct
+  label: Mixtral-8x7B-Instruct
+  model_id: mistralai/Mixtral-8x7B-Instruct-v0.1
+  dtype: bfloat16
+  device_map: auto

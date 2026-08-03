@@ -1,0 +1,23 @@
+# LLaMA-2-13B (Touvron et al., 2023) -- first main-text model of Tables 1-4.
+#
+# `NousResearch/Llama-2-13b-hf` is an ungated mirror of `meta-llama/Llama-2-13b-hf`;
+# use the gated original instead if you have accepted the licence.
+#
+# That mirror ships only the SentencePiece `tokenizer.model` and no
+# `tokenizer.json`, which recent transformers cannot always convert.  Stage I
+# wants a *fast* tokenizer (character offsets are what map a sensitive span onto
+# an exact token range), so the tokenizer is taken from a mirror that publishes
+# the fast form.  All three Llama-2-13B mirrors ship a byte-identical
+# tokenizer.model (sha256 9e556afd4421...), so this changes nothing about
+# tokenisation; the loader additionally asserts the vocabulary sizes agree.
+defaults:
+  - configs/default.yaml
+
+model:
+  key: llama2-13b
+  label: LLaMA-2-13B
+  model_id: NousResearch/Llama-2-13b-hf
+  tokenizer_id: unsloth/llama-2-13b
+  # model_id: meta-llama/Llama-2-13b-hf   # gated original; needs no tokenizer_id
+  dtype: bfloat16
+  device_map: auto

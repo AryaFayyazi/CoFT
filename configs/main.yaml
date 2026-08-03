@@ -1,0 +1,44 @@
+# Main-text reproduction sizes.
+#
+# Sample sizes are chosen so that the full grid (2 models x 5 methods x 6 bias
+# benchmarks x 3 seeds, plus utility, efficiency, ablation and both sweeps) fits
+# in a few GPU-hours while still resolving the effects the paper reports.  With
+# ~500 evaluation items a proportion is measured to about +-2 points, which is
+# well inside the 20-40% relative bias reductions under test.
+#
+# For a run at the paper's full split sizes, use configs/default.yaml directly
+# (or raise the numbers below); nothing else changes.
+
+defaults:
+  - configs/default.yaml
+
+seeds: [0, 1, 2]
+
+conformal:
+  n_calibration_contexts: 300
+  max_continuation_tokens: 48
+
+data:
+  bias:
+    stereoset: 600
+    crows: 600
+    bbq: 600
+    bold: 400
+    utrecht: 400
+    compas: 400
+  utility:
+    gsm8k: 150
+    strategyqa: 400
+    arc_easy: 400
+    piqa: 400
+  quality:
+    wikitext_docs: 40
+    mauve_samples: 150
+  batch_size: 8
+  generation_batch_size: 8
+  bold_max_new_tokens: 48
+  gsm8k_max_new_tokens: 256
+
+efficiency:
+  n_windows: 5
+  max_new_tokens: 128

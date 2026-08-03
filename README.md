@@ -1,0 +1,235 @@
+# COFT — Chain of Fair Thought
+
+Reference implementation of
+
+> **COFT: Counterfactual-Conformal Decoding for Fair Chain-of-Thought Reasoning in Large Language Models**
+> Arya Fayyazi, Mehdi Kamal, Massoud Pedram — *ICML 2026*
+
+COFT is a **training-free decoding method** that applies token-level fairness control at decode
+time, with distribution-free *marginal* validity guarantees (under exchangeability) for any frozen
+causal language model. No retraining, no gradients, no auxiliary classifiers, no weight access.
+
+---
+
+## The method in three stages
+
+At every decoding step `t`, COFT runs the frozen model twice on the **same generated prefix**
+`w_<t` — once on the factual prompt `p`, once on a masked counterfactual `p̃ = M(p)` — and then:
+
+| Stage | Paper | Code | What it does |
+|---|---|---|---|
+| **I. Counterfactual masking** | §3.2, App. D.1 | [`coft/masking.py`](coft/masking.py) | Replaces each sensitive span with a tokenizer-stable sentinel, **preserving token count exactly** so the two branches stay index-aligned |
+| **II. Logit fusion** | §3.3, Eq. 4 | [`coft/fusion.py`](coft/fusion.py) | `ẑ_t = (1−λ)·z^F_t + λ·z^CF_t` — a convex interpolation in logit space, equivalently a normalised geometric mixture of the two next-token distributions |
+| **III. Dual-branch split-CP** | §3.4, Eq. 5–7 | [`coft/conformal.py`](coft/conformal.py) | Certifies `C_t = {v : min(π̂_t(v), π^CF_t(v)) ≥ τ_t}` using an offline, ceiling-corrected `(1−α)` quantile |
+
+Sampling is then restricted to `C_t` (Eq. 8), with a deterministic `argmax π̂_t` fallback on the
+rare empty-set event. The whole loop is [`coft/decoding.py`](coft/decoding.py) (`COFTDecoder`),
+which mirrors Algorithm 1 line for line.
+
+**Why length-preserving masking matters.** A `k`-token span becomes exactly `k` sentinels, never
+one. If a span collapsed, every position after the edit would shift and `z^F_t` / `z^CF_t` would
+stop describing the same autoregressive index — the paired comparison, and with it the conformal
+score, would be meaningless. The substitution is therefore done in *token* space, which makes
+length preservation exact rather than approximate.
+
+---
+
+## Install
+
+```bash
+git clone https://github.com/AryaFayyazi/CoFT.git
+cd CoFT
+pip install -e ".[mauve]"
+python -m spacy download en_core_web_sm   # optional NER span route (App. D.2)
+python scripts/fetch_data.py              # downloads the benchmarks
+```
+
+`fetch_data.py` pulls CrowS-Pairs, BBQ and COMPAS from their canonical GitHub releases, the
+Utrecht recruitment set from Kaggle via `kagglehub`, and warms the Hub-hosted datasets. Nothing
+third-party is redistributed in this repository.
+
+Models are loaded straight from the Hub. The two main-text checkpoints are
+`NousResearch/Llama-2-13b-hf` (an ungated mirror of `meta-llama/Llama-2-13b-hf`) and
+`mistralai/Mistral-7B-Instruct-v0.2`; swap in the gated originals by editing
+[`configs/models/`](configs/models).
+
+---
+
+## Quick start
+
+```python
+from coft.model import FrozenLM
+from coft.masking import Masker
+from coft.decoding import COFTDecoder
+from coft.calibration import calibrate
+from coft.spans import SensitiveLexicon, detect_spans
+
+lm     = FrozenLM.from_pretrained("mistralai/Mistral-7B-Instruct-v0.2")
+masker = Masker(lm.tokenizer)
+lex    = SensitiveLexicon()
+
+# Stage III is calibrated offline on a disjoint pool of (prompt, reference, spans) triples.
+thresholds = calibrate(lm, my_calibration_corpus, lam=0.6, alpha=0.10, masker=masker)
+
+coft = COFTDecoder(lm, masker=masker, lam=0.6, thresholds=thresholds)
+
+prompt = "Police stopped a Latino driver for a broken taillight. Who likely received a ticket?"
+out = coft.generate([prompt], [detect_spans(prompt, lex)], max_new_tokens=32, greedy=True)
+print(out.texts[0])
+```
+
+Vanilla decoding continues this prompt with identity-marked options
+(`"A) A white man B) A black man C) A Latino man"`); COFT continues it with
+`"A. A driver with a broken taillight …"` — the masked branch cannot see the protected span, so
+the fused distribution never concentrates on it and the certified set excludes it.
+
+---
+
+## Reproducing the paper
+
+```bash
+make setup                                     # install + fetch data
+make test                                      # fast unit tests, no model needed
+make smoke                                     # tiny end-to-end run of every stage
+make all MODEL=configs/models/llama2-13b.yaml  # Tables 1-4 + Figures 3-4
+```
+
+Individual tables:
+
+| Target | Script | Output |
+|---|---|---|
+| Table 1 — bias | `scripts/run_bias.py` | `results/<model>/table1_bias.json` |
+| Table 2 — utility & quality | `scripts/run_utility.py` | `results/<model>/table2_utility.json` |
+| Table 3 — efficiency | `scripts/run_efficiency.py` | `results/<model>/table3_efficiency.json` |
+| Table 4 — ablations | `scripts/run_ablation.py` | `results/<model>/table4_ablation.json` |
+| Figures 3–4 — λ and α sweeps | `scripts/run_sweep.py` | `results/<model>/sweeps.json` |
+| Render everything | `scripts/make_tables.py`, `scripts/make_figures.py` | `results/TABLES.md`, `results/<model>/fig*.pdf` |
+
+Add `--override configs/main.yaml` for the sample sizes used to produce the numbers below, or
+`--override configs/smoke.yaml` for a fast sanity run. All decoding hyper-parameters live in
+[`configs/default.yaml`](configs/default.yaml) and are shared by *every* method, which is the
+"fair decoding" requirement of App. C.2: nucleus `p = 0.9`, temperature `1.0`, `T = 256`.
+
+---
+
+## Experimental protocol
+
+**Calibration is per benchmark and disjoint.** Following App. C.2 ("for each dataset and step
+index `t`, a disjoint calibration pool (10–15%) sets `τ_t`; no test leakage"), each benchmark is
+split into a 15% calibration slice and an evaluation slice. Thresholds used on a benchmark come
+from that benchmark's own calibration slice. The reference continuation is always the *unbiased*
+branch of the item — the anti-stereotypical sentence, the gold answer, the factual Wikipedia
+continuation — so calibration never rewards the behaviour being filtered.
+
+**Position binning.** Thresholds are shared across bins of width 8 up to `T = 256`, with all later
+steps tied to the last bin (§3.4).
+
+**Seeds.** Results are averaged over three seeds. StereoSet, CrowS-Pairs, BBQ, Utrecht, COMPAS,
+the multiple-choice tasks and perplexity are teacher-forced likelihoods and therefore
+*deterministic* given the model and thresholds; only BOLD free-generation and MAUVE are stochastic.
+The runners exploit this and recompute only the stochastic parts per seed — identical numbers, ~3×
+less compute.
+
+**Efficiency.** Timed with EOS stopping disabled so every method runs the identical step budget;
+otherwise a method that happens to emit EOS earlier amortises prefill over fewer tokens and the
+tokens/second comparison stops being like-for-like.
+
+---
+
+## Metric definitions
+
+Bias benchmarks are reported on several scales in the literature, so the exact definitions used
+here are pinned down in [`coft/metrics.py`](coft/metrics.py):
+
+| Column | Definition |
+|---|---|
+| **SS** ↓ | `2 · max(0, p_stereo − 0.5)`, where `p_stereo` is the fraction of StereoSet triples whose stereotypical sentence outscores the anti-stereotypical one. `0` = parity. The classical `ss`, `lms` and `icat` are reported alongside. |
+| **CP Acc** ↑ | `100 − CP-STEREO`, exactly as in §4.1, where `CP-STEREO` is the standard CrowS-Pairs metric. `cp_parity_gap = \|CP-STEREO − 50\|` is also recorded, since that is the quantity that is zero for an unbiased model. |
+| **BBQ Bias** ↓ | Fraction of items where the model picks the stereotype-aligned identity answer *and* that answer is wrong. Parrish et al.'s `2·(n_biased/n_non_unknown) − 1` is reported as `bbq_bias_score`. |
+| **BOLD Tox** ↓ | Mean toxicity of generated continuations under `s-nlp/roberta_toxicity_classifier`. |
+| **Utrecht DP / COMPAS Gap** ↓ | Maximum pairwise demographic-parity gap of `P(Yes)` across protected groups, where `P(Yes)` is the two-way softmax of the decoder's log-likelihoods for the `Yes` / `No` continuations. |
+
+**Likelihood under a certified policy.** Soundness (Prop. 2) means COFT never *emits* a token
+outside `C_t`, so the policy assigns it zero probability. Likelihood-based metrics need a finite,
+monotone score, so an uncertified token is floored at the certification boundary `τ_t` — the
+largest probability it could have had while still failing certification — and renormalised by the
+certified mass. On the empty-set event the argmax fallback applies and no restriction is imposed
+(App. B.14). This convention is what lets Stage III show up on StereoSet and CrowS-Pairs at all;
+without it, certification would be invisible to every likelihood-based benchmark.
+
+**Perplexity** is reported for the method's corrected distribution `π̂` — the density a decoding
+intervention actually changes — since the certified set is a sampling constraint, not a density.
+`--ppl-certified` scores under the certified policy instead.
+
+---
+
+## Repository layout
+
+```
+coft/
+├── masking.py      Stage I    length-preserving sentinel masking (Eq. 3)
+├── fusion.py       Stage II   logit fusion / geometric mixture (Eq. 4, Lemmas 1-2)
+├── conformal.py    Stage III  dual-branch split-CP, binning, ceiling quantile (Eq. 5-7)
+├── decoding.py                Algorithm 1 + the shared generate/score loops
+├── calibration.py             offline split calibration (Eq. 6), multi-λ in one pass
+├── model.py                   frozen LM, multi-branch KV-cached forward
+├── spans.py                   protected-attribute lexicon + optional NER
+├── toxicity.py                sequence- and token-level toxicity
+├── metrics.py                 every metric definition
+├── evaluate.py                benchmark runners per item shape
+├── registry.py                config → model/decoder construction
+├── baselines/                 vanilla, SDD, DExperts/GeDi, DT-CD
+└── data/                      the six bias benchmarks + four utility tasks + corpora
+```
+
+### Baselines
+
+| Name | Reference | Notes |
+|---|---|---|
+| **Vanilla** | — | no mitigation; the bias lower bound |
+| **SDD** | Schick et al. (2021) | faithful self-debiasing scaling `α(Δ) = exp(decay·Δ)` for `Δ < 0` |
+| **DExperts / GeDi** | Liu et al. (2021); Krause et al. (2021) | `z + strength·(z_expert − z_antiexpert)`. Defaults to GeDi's generative-discriminator trick (prompt-conditioned pseudo-experts on the same frozen model), keeping the baseline inside COFT's frozen-weights threat model; real expert checkpoints are supported via config. `strength` follows App. C.3 — the strongest steering whose accuracy cost stays within ~5% of vanilla. |
+| **DT-CD** | — | single-branch conformal acceptance on toxicity **and** minimum probability; the closest baseline to COFT's CP component without counterfactual reasoning |
+
+---
+
+## Tests
+
+`make test` runs 67 tests in a few seconds, no model download required. They check the
+mathematical core directly:
+
+- **Lemma 1** — fusion equals the normalised geometric mixture, computed two independent ways
+- **Proposition 1 / Lemma 2** — pairwise log-odds interpolate linearly in `λ`
+- **Theorem 2** — `KL(π̂ ‖ π^CF)` is non-increasing in `λ`, vanishing at `λ = 1`; fixed points
+- **Theorem 1** — empirical coverage on exchangeable synthetic data reaches `1 − α` and is not
+  absurdly conservative, for `α ∈ {0.05, 0.10, 0.20}`
+- **Theorem 3** — `C_t = U_t ∩ V_t` and the set-size bound
+- **Lemma 3 / Corollary 1** — the TV-under-restriction and Pinsker bounds hold
+- **Theorem 4** — union-bound composition across steps
+- **Eq. 3** — masking is idempotent, order-preserving and exactly token-count-preserving
+- **Eq. 6** — the ceiling-corrected quantile picks rank `⌈(1−α)(n+1)⌉` and stays conservative when
+  the calibration set is too small to support the level
+
+`scripts/smoke_test.py` (`make smoke`) additionally runs every stage of the pipeline end to end on
+a few dozen items and asserts the structural invariants — token alignment, disjoint calibration
+slices, finite thresholds, non-empty certified sets, and empirical coverage near `1 − α`.
+
+---
+
+## Citation
+
+```bibtex
+@inproceedings{fayyazi2026coft,
+  title     = {{COFT}: Counterfactual-Conformal Decoding for Fair Chain-of-Thought
+               Reasoning in Large Language Models},
+  author    = {Fayyazi, Arya and Kamal, Mehdi and Pedram, Massoud},
+  booktitle = {Proceedings of the 43rd International Conference on Machine Learning},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {306},
+  year      = {2026},
+}
+```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

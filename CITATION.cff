@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the paper below."
+title: "COFT: Counterfactual-Conformal Decoding for Fair Chain-of-Thought Reasoning in Large Language Models"
+abstract: >-
+  Reference implementation of COFT (Chain of Fair Thought), a training-free
+  decoding method that applies token-level fairness control at decode time with
+  distribution-free marginal validity guarantees (under exchangeability) for any
+  frozen causal language model.
+type: software
+license: MIT
+repository-code: "https://github.com/AryaFayyazi/CoFT"
+version: "1.0.0"
+authors:
+  - family-names: Fayyazi
+    given-names: Arya
+    email: afayyazi@usc.edu
+    affiliation: "University of Southern California"
+  - family-names: Kamal
+    given-names: Mehdi
+    affiliation: "University of Southern California"
+  - family-names: Pedram
+    given-names: Massoud
+    affiliation: "University of Southern California"
+keywords:
+  - conformal prediction
+  - counterfactual fairness
+  - large language models
+  - decoding
+preferred-citation:
+  type: conference-paper
+  title: "COFT: Counterfactual-Conformal Decoding for Fair Chain-of-Thought Reasoning in Large Language Models"
+  year: 2026
+  collection-title: "Proceedings of the 43rd International Conference on Machine Learning"
+  collection-type: proceedings
+  volume: 306
+  authors:
+    - family-names: Fayyazi
+      given-names: Arya
+    - family-names: Kamal
+      given-names: Mehdi
+    - family-names: Pedram
+      given-names: Massoud

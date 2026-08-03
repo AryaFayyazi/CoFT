@@ -1,0 +1,11 @@
+# LLaMA-2-7B (Touvron et al., 2023) -- Appendix C.4 model.
+defaults:
+  - configs/default.yaml
+
+model:
+  key: llama2-7b
+  label: LLaMA-2-7B
+  model_id: NousResearch/Llama-2-7b-hf
+  tokenizer_id: unsloth/llama-2-7b
+  dtype: bfloat16
+  device_map: auto

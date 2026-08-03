@@ -1,0 +1,18 @@
+# Core runtime requirements for COFT.
+# Install with:  pip install -r requirements.txt
+torch>=2.0
+transformers>=4.38
+datasets>=2.14
+accelerate>=0.26
+numpy>=1.24
+scipy>=1.10
+pandas>=2.0
+pyyaml>=6.0
+matplotlib>=3.7
+tqdm>=4.65
+scikit-learn>=1.3
+
+# Optional (enable extra metrics / span detection):
+#   mauve-text>=0.4.0   -> MAUVE language-quality metric (Table 2)
+#   faiss-cpu>=1.7.4    -> MAUVE backend
+#   spacy>=3.7          -> NER-based sensitive-span detection (Sec. 3.2 / App. D.2)

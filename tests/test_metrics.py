@@ -1,0 +1,122 @@
+"""Metric definitions -- the scales that make the tables reproducible."""
+
+from __future__ import annotations
+
+import math
+
+from coft.metrics import (
+    average_rank,
+    bbq_metrics,
+    choice_accuracy,
+    crows_metrics,
+    extract_final_number,
+    gsm8k_exact_match,
+    parity_gap,
+    perplexity_from_logprobs,
+    stereoset_metrics,
+    toxicity_metrics,
+)
+
+
+def test_stereoset_parity_is_zero_bias():
+    stereo = [1.0, 0.0, 1.0, 0.0]
+    anti = [0.0, 1.0, 0.0, 1.0]
+    m = stereoset_metrics(stereo, anti)
+    assert m["ss_raw"] == 50.0
+    assert m["ss_bias"] == 0.0
+
+
+def test_stereoset_full_stereotype_preference():
+    m = stereoset_metrics([1.0] * 10, [0.0] * 10)
+    assert m["ss_raw"] == 100.0
+    assert m["ss_bias"] == 1.0
+
+
+def test_stereoset_anti_preference_clamps_at_zero():
+    """Preferring anti-stereotypes is not rewarded below zero."""
+    m = stereoset_metrics([0.0] * 10, [1.0] * 10)
+    assert m["ss_bias"] == 0.0
+
+
+def test_stereoset_icat():
+    m = stereoset_metrics([1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0], [-5.0] * 4)
+    assert m["lms"] == 100.0
+    assert m["icat"] == 100.0     # ss = 50 -> perfect ICAT
+
+
+def test_crows_definition():
+    m = crows_metrics([1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0])
+    assert m["cp_stereo"] == 50.0
+    assert m["cp_acc"] == 50.0
+    assert m["cp_parity_gap"] == 0.0
+
+
+def test_bbq_bias_counts_stereotype_aligned_errors():
+    # item 0: picks the stereotyped identity, wrong  -> biased
+    # item 1: picks the gold answer                  -> not biased
+    # item 2: picks UNKNOWN                          -> not biased
+    preds = [0, 1, 2]
+    labels = [1, 1, 1]
+    targets = [0, 0, 0]
+    unknown = [2, 2, 2]
+    m = bbq_metrics(preds, labels, targets, unknown)
+    assert m["bbq_bias"] == 1 / 3
+    assert m["bbq_acc"] == 100 * 1 / 3
+
+
+def test_bbq_bias_zero_when_always_correct():
+    m = bbq_metrics([1, 1], [1, 1], [0, 0], [2, 2])
+    assert m["bbq_bias"] == 0.0
+
+
+def test_parity_gap():
+    m = parity_gap({"A": [1.0, 1.0, 0.0], "B": [0.0, 0.0, 0.0]})
+    assert m["dp_gap"] == 2 / 3
+    assert m["n_groups"] == 2
+
+
+def test_parity_gap_single_group_is_nan():
+    assert math.isnan(parity_gap({"A": [1.0]})["dp_gap"])
+
+
+def test_toxicity_metrics():
+    m = toxicity_metrics([0.1, 0.9, 0.2, 0.8])
+    assert m["toxicity"] == 0.5
+    assert m["toxicity_rate"] == 0.5
+
+
+def test_extract_final_number():
+    assert extract_final_number("so 3 + 4 = 7. The answer is 7.") == "7"
+    assert extract_final_number("blah 12 then 48") == "48"
+    assert extract_final_number("The answer is $1,250.") == "1250"
+    assert extract_final_number("no digits here") is None
+
+
+def test_gsm8k_exact_match():
+    m = gsm8k_exact_match(["The answer is 72.", "The answer is 5."], ["72", "6"])
+    assert m["acc"] == 50.0
+
+
+def test_choice_accuracy():
+    assert choice_accuracy([0, 1, 2], [0, 1, 1])["acc"] == 100 * 2 / 3
+
+
+def test_perplexity():
+    assert perplexity_from_logprobs(-10.0, 10) == math.exp(1.0)
+    assert math.isnan(perplexity_from_logprobs(-1.0, 0))
+
+
+def test_average_rank_orders_and_handles_ties():
+    per_method = {
+        "best": {"bias": 0.1, "acc": 90.0},
+        "mid": {"bias": 0.2, "acc": 80.0},
+        "worst": {"bias": 0.3, "acc": 70.0},
+    }
+    r = average_rank(per_method, [("bias", False), ("acc", True)])
+    assert r["best"] == 1.0
+    assert r["mid"] == 2.0
+    assert r["worst"] == 3.0
+
+    tied = {"a": {"x": 1.0}, "b": {"x": 1.0}}
+    rt = average_rank(tied, [("x", False)])
+    assert rt["a"] == rt["b"] == 1.5

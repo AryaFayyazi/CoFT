@@ -1,0 +1,83 @@
+# Shared experimental protocol (paper Sec. 4.1 and App. C.2).
+#
+# Every method in every table is built from this block, which is how the
+# "fair decoding" requirement of App. C.2 is enforced: identical nucleus
+# sampling, temperature and generation length for COFT and all baselines.
+
+decoding:
+  top_p: 0.9            # nucleus sampling, App. C.2
+  temperature: 1.0
+  max_new_tokens: 256   # "a maximum generation length of T = 256 tokens"
+  seed: 0
+
+seeds: [0, 1, 2]        # "the mean over three random seeds", Sec. 4
+
+methods:
+  coft:
+    lam: 0.6            # selected on validation by the Pareto-knee rule (Fig. 3)
+  dtcd:
+    toxicity_threshold: 0.5
+  sdd:
+    decay: 50.0         # self-debiasing decay constant, Schick et al. (2021)
+  dexperts:
+    # Tuned per App. C.3: the strongest steering whose task-accuracy cost stays
+    # within ~5% of the unmitigated baseline.  With prompt-conditioned pseudo
+    # experts the logit contrast is larger than with dedicated expert
+    # checkpoints, so the usual DExperts alpha of 1-2 is far too aggressive here
+    # (it drives Wikitext-2 perplexity from ~13 to ~57).
+    strength: 0.25
+    top_k_filter: 100
+
+conformal:
+  alpha: 0.10           # selected on validation by the Pareto-knee rule (Fig. 4)
+  bin_width: 8          # "bins of width 8", Sec. 3.4
+  max_position: 256
+  n_calibration_contexts: 400
+  max_continuation_tokens: 48
+  calibration_sources: [stereoset, crows, bbq, bold]
+
+masking:
+  sentinel: null                # null -> first tokenizer-stable candidate
+  categories: null              # null -> all lexicon families (joint mask, App. D.4)
+  # NER is the second span-acquisition route of Sec. 3.2 / App. D.2.  It mainly
+  # matters on CrowS-Pairs, where protected attributes often surface as names
+  # (PERSON) rather than lexicon terms: it lifts the fraction of maskable items
+  # from ~30% to ~37%.  Degrades gracefully to lexicon-only if spaCy or
+  # en_core_web_sm is missing.
+  use_ner: true
+
+toxicity:
+  model_id: s-nlp/roberta_toxicity_classifier
+  threshold: 0.5
+
+# Evaluation sizes.  `null` means "use the whole split".
+# The defaults below are the full-run values; smoke runs override them.
+data:
+  bias:
+    stereoset: 1200
+    crows: 1200
+    bbq: 1200
+    bold: 800
+    utrecht: 600
+    compas: 600
+  utility:
+    gsm8k: 400
+    strategyqa: 500
+    arc_easy: 800
+    piqa: 800
+  quality:
+    wikitext_docs: 60
+    mauve_samples: 300
+  batch_size: 8
+  generation_batch_size: 8
+  bold_max_new_tokens: 48
+  gsm8k_max_new_tokens: 256
+
+efficiency:
+  batch_size: 4         # Table 3: "batch size 4, max len 256"
+  max_new_tokens: 256
+  prompt_tokens: 64
+  n_warmup: 1
+  n_windows: 5          # "at least 5 repeated timing windows", App. C.2
+
+output_dir: results

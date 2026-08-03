@@ -1,0 +1,10 @@
+# Mistral-7B-Instruct (Jiang et al., 2023) -- second main-text model of Tables 1-4.
+defaults:
+  - configs/default.yaml
+
+model:
+  key: mistral-7b-instruct
+  label: Mistral-7B-Instruct
+  model_id: mistralai/Mistral-7B-Instruct-v0.2
+  dtype: bfloat16
+  device_map: auto

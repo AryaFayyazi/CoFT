@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+
+# Raw third-party data that we cannot redistribute (see scripts/fetch_data.py)
+data/raw/
+!data/raw/.gitkeep
+
+# Derived caches (regenerated on demand)
+results/cache/
+.cache/
+logs/
+*.log
+wandb/
+
+# Machine-local environment
+.env.local
+
+!results/.gitkeep
+
+# Reproduced results ARE committed (results/<model>/*.json, TABLES.md, figures)
+# so the numbers in the README can be checked without a GPU.
