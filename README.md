@@ -83,6 +83,17 @@ Vanilla decoding continues this prompt with identity-marked options
 `"A. A driver with a broken taillight …"` — the masked branch cannot see the protected span, so
 the fused distribution never concentrates on it and the certified set excludes it.
 
+### Worked examples
+
+`examples/worked_examples.py` reproduces the step-by-step tables of App. D.3 on a
+real model: for each example it prints the factual, masked and fused
+distributions over the top candidates, the certification decision for each, and
+what vanilla decoding and COFT actually generate.
+
+```bash
+python examples/worked_examples.py
+```
+
 ---
 
 ## Reproducing the paper
