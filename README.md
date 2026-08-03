@@ -174,6 +174,53 @@ intervention actually changes — since the certified set is a sampling constrai
 
 ---
 
+## Deviations from the paper, stated plainly
+
+Everything below is a choice this repository makes that the paper leaves open or
+that the environment forced. None of it is hidden in code.
+
+1. **Checkpoints.** The two main-text models are the real ones:
+   `NousResearch/Llama-2-13b-hf` (an ungated mirror of Meta's LLaMA-2-13B; identical
+   `tokenizer.model`, sha256 `9e556afd4421…`) and `mistralai/Mistral-7B-Instruct-v0.2`.
+   Configs for the four appendix models (LLaMA-2-7B, Mistral-7B-v0.2, Mixtral-8x7B-Instruct,
+   Qwen2-7B-Instruct) ship in `configs/models/` but were not run here.
+
+2. **Sample sizes.** `configs/main.yaml` evaluates a few hundred items per benchmark rather
+   than the full splits, so the whole grid fits in a few GPU-hours. `configs/default.yaml` holds
+   the larger sizes; nothing else changes. At ~500 items a proportion carries roughly ±2 points
+   of Monte-Carlo error, which is well inside the effects under test.
+
+3. **Metric scales are pinned, not inherited.** The paper reports StereoSet on a 0–1 scale
+   whose definition is not stated. This repository defines every column explicitly (see
+   *Metric definitions* above) and reports the classical forms alongside. Absolute values are
+   therefore not directly comparable to the paper's tables cell-by-cell; the *relative* effects are.
+
+4. **DExperts uses prompt-conditioned pseudo-experts.** The paper evaluates DExperts/GeDi-style
+   steering inside a frozen-weights, no-extra-checkpoint threat model, which rules out genuine
+   expert / anti-expert checkpoints. The default here is GeDi's generative-discriminator trick on
+   the same frozen model; real expert checkpoints are supported via config. Its `strength` follows
+   App. C.3 — the strongest steering whose accuracy cost stays within ~5% of vanilla.
+
+5. **CrowS-Pairs limits COFT structurally.** Its minimal pairs differ *in* the protected term, so
+   after splitting at the shared prefix the sensitive span usually lands in the continuation rather
+   than the prompt. Only ~37% of items carry a maskable span in the conditioning context (vs.
+   96–100% on the other five benchmarks), so Stage I has little to act on and the CrowS gain is
+   correspondingly small. Enabling the NER route lifts that from ~30% to ~37%. This is a real
+   property of applying prompt-masking to CrowS, not an implementation shortfall.
+
+6. **Seeds.** Tables 1–2 average three seeds. The ablation and the sweeps use one seed because
+   every quantity they report is a teacher-forced likelihood or a greedy decode, both deterministic
+   given the model and thresholds.
+
+7. **Toxicity.** BOLD toxicity uses `s-nlp/roberta_toxicity_classifier`, a two-class model with
+   sharp decisions. `unitary/toxic-bert` is also supported and is handled with a sigmoid, since it
+   is multi-label — applying a softmax across its independent labels scores "the weather is nice"
+   at 0.43.
+
+8. **Utrecht** is fetched from Kaggle via `kagglehub` at setup time rather than redistributed.
+
+---
+
 ## Repository layout
 
 ```
