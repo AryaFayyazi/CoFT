@@ -1,0 +1,258 @@
+{
+  "model": {
+    "key": "mistral-7b-instruct",
+    "label": "Mistral-7B-Instruct",
+    "model_id": "mistralai/Mistral-7B-Instruct-v0.2",
+    "dtype": "bfloat16",
+    "device_map": {
+      "": 0
+    }
+  },
+  "seed": 0,
+  "lambda_sweep": {
+    "alpha": 0.1,
+    "points": [
+      {
+        "lambda": 0.0,
+        "alpha": 0.1,
+        "bias_avg": 0.22352774810522558,
+        "utility_avg": 65.475,
+        "bias_row": {
+          "SS": 0.2666666666666666,
+          "CP Acc": 34.0,
+          "BBQ Bias": 0.34444444444444444,
+          "BOLD Tox": 7.323044788790866e-05,
+          "Utrecht DP": 0.0698282000107261,
+          "COMPAS Gap": 0.00015394706162830119
+        },
+        "tau0": 1.1324882507324219e-06,
+        "empirical_coverage": 0.9633619147349192,
+        "empirical_miscoverage": 0.03663808526508083,
+        "normalized_set_size": 0.002611822666266026
+      },
+      {
+        "lambda": 0.1,
+        "alpha": 0.1,
+        "bias_avg": 0.21320400826045485,
+        "utility_avg": 64.80833333333334,
+        "bias_row": {
+          "SS": 0.24,
+          "CP Acc": 34.66666666666667,
+          "BBQ Bias": 0.32222222222222224,
+          "BOLD Tox": 6.894269561598776e-05,
+          "Utrecht DP": 0.06341966473873817,
+          "COMPAS Gap": 0.000179886572819421
+        },
+        "tau0": 1.2516975402832031e-06,
+        "empirical_coverage": 0.9627382680112724,
+        "empirical_miscoverage": 0.03726173198872762,
+        "normalized_set_size": 0.0025842159955929487
+      },
+      {
+        "lambda": 0.2,
+        "alpha": 0.1,
+        "bias_avg": 0.20806479434636316,
+        "utility_avg": 64.80833333333334,
+        "bias_row": {
+          "SS": 0.22666666666666657,
+          "CP Acc": 34.66666666666667,
+          "BBQ Bias": 0.3111111111111111,
+          "BOLD Tox": 0.0001192788514890708,
+          "Utrecht DP": 0.05691371363298092,
+          "COMPAS Gap": 0.0002446624825979127
+        },
+        "tau0": 1.4901161193847656e-06,
+        "empirical_coverage": 0.9622134002864048,
+        "empirical_miscoverage": 0.037786599713595215,
+        "normalized_set_size": 0.002890315129206731
+      },
+      {
+        "lambda": 0.3,
+        "alpha": 0.1,
+        "bias_avg": 0.20522074325972364,
+        "utility_avg": 64.975,
+        "bias_row": {
+          "SS": 0.22666666666666657,
+          "CP Acc": 34.66666666666667,
+          "BBQ Bias": 0.3,
+          "BOLD Tox": 5.957369641691912e-05,
+          "Utrecht DP": 0.050910957419956215,
+          "COMPAS Gap": 0.00035392844196890927
+        },
+        "tau0": 1.7881393432617188e-06,
+        "empirical_coverage": 0.9622744768909597,
+        "empirical_miscoverage": 0.037725523109040315,
+        "normalized_set_size": 0.0027051407251602565
+      },
+      {
+        "lambda": 0.4,
+        "alpha": 0.1,
+        "bias_avg": 0.19258531005864934,
+        "utility_avg": 63.93333333333334,
+        "bias_row": {
+          "SS": 0.21333333333333337,
+          "CP Acc": 36.0,
+          "BBQ Bias": 0.25555555555555554,
+          "BOLD Tox": 0.0002884103289034101,
+          "Utrecht DP": 0.04582123610343403,
+          "COMPAS Gap": 0.0005133250306696979
+        },
+        "tau0": 2.086162567138672e-06,
+        "empirical_coverage": 0.9624374398539226,
+        "empirical_miscoverage": 0.037562560146077395,
+        "normalized_set_size": 0.0030548001802884616
+      },
+      {
+        "lambda": 0.6,
+        "alpha": 0.1,
+        "bias_avg": 0.18557936511248307,
+        "utility_avg": 63.833333333333336,
+        "bias_row": {
+          "SS": 0.18666666666666676,
+          "CP Acc": 34.66666666666667,
+          "BBQ Bias": 0.23333333333333334,
+          "BOLD Tox": 0.00029381738811935066,
+          "Utrecht DP": 0.03884768157890661,
+          "COMPAS Gap": 0.0010013583745390742
+        },
+        "tau0": 2.5033950805664062e-06,
+        "empirical_coverage": 0.9634532314697142,
+        "empirical_miscoverage": 0.03654676853028582,
+        "normalized_set_size": 0.0033929662459935904
+      },
+      {
+        "lambda": 0.8,
+        "alpha": 0.1,
+        "bias_avg": 0.17216822963121545,
+        "utility_avg": 63.40833333333333,
+        "bias_row": {
+          "SS": 0.1200000000000001,
+          "CP Acc": 33.33333333333333,
+          "BBQ Bias": 0.2,
+          "BOLD Tox": 0.009669110237773566,
+          "Utrecht DP": 0.03494989197148268,
+          "COMPAS Gap": 0.0017237089113694148
+        },
+        "tau0": 2.6226043701171875e-06,
+        "empirical_coverage": 0.9607771223936051,
+        "empirical_miscoverage": 0.03922287760639487,
+        "normalized_set_size": 0.003422131660657051
+      },
+      {
+        "lambda": 1.0,
+        "alpha": 0.1,
+        "bias_avg": 0.1293178189486802,
+        "utility_avg": 62.516666666666666,
+        "bias_row": {
+          "SS": 0.040000000000000036,
+          "CP Acc": 45.333333333333336,
+          "BBQ Bias": 0.15555555555555556,
+          "BOLD Tox": 0.00011005388376361224,
+          "Utrecht DP": 0.030956900431365897,
+          "COMPAS Gap": 0.0026177371547293493
+        },
+        "tau0": 2.9802322387695312e-06,
+        "empirical_coverage": 0.9611561507726336,
+        "empirical_miscoverage": 0.03884384922736639,
+        "normalized_set_size": 0.003887000623319097
+      }
+    ],
+    "chosen": 0.2
+  },
+  "alpha_sweep": {
+    "lambda": 0.6,
+    "points": [
+      {
+        "lambda": 0.6,
+        "alpha": 0.02,
+        "bias_avg": 0.18447163823875687,
+        "utility_avg": 63.483333333333334,
+        "bias_row": {
+          "SS": 0.18666666666666676,
+          "CP Acc": 35.33333333333333,
+          "BBQ Bias": 0.23333333333333334,
+          "BOLD Tox": 0.00031412703850946855,
+          "Utrecht DP": 0.03884768157890661,
+          "COMPAS Gap": 0.0010013541484582555
+        },
+        "tau0": 0.0,
+        "empirical_coverage": 0.9937872812372813,
+        "empirical_miscoverage": 0.006212718762718672,
+        "normalized_set_size": 0.03622987170920842
+      },
+      {
+        "lambda": 0.6,
+        "alpha": 0.05,
+        "bias_avg": 0.18224725034192044,
+        "utility_avg": 63.69166666666667,
+        "bias_row": {
+          "SS": 0.17333333333333334,
+          "CP Acc": 35.33333333333333,
+          "BBQ Bias": 0.23333333333333334,
+          "BOLD Tox": 0.0003011307386987028,
+          "Utrecht DP": 0.03884768383103221,
+          "COMPAS Gap": 0.0010013541484582555
+        },
+        "tau0": 2.384185791015625e-07,
+        "empirical_coverage": 0.9832723186591406,
+        "empirical_miscoverage": 0.016727681340859446,
+        "normalized_set_size": 0.009967310196314104
+      },
+      {
+        "lambda": 0.6,
+        "alpha": 0.1,
+        "bias_avg": 0.18557936511248307,
+        "utility_avg": 63.666666666666664,
+        "bias_row": {
+          "SS": 0.18666666666666676,
+          "CP Acc": 34.66666666666667,
+          "BBQ Bias": 0.23333333333333334,
+          "BOLD Tox": 0.00029381738811935066,
+          "Utrecht DP": 0.03884768157890661,
+          "COMPAS Gap": 0.0010013583745390742
+        },
+        "tau0": 2.5033950805664062e-06,
+        "empirical_coverage": 0.9634532314697142,
+        "empirical_miscoverage": 0.03654676853028582,
+        "normalized_set_size": 0.0033929662459935904
+      },
+      {
+        "lambda": 0.6,
+        "alpha": 0.15,
+        "bias_avg": 0.1795198023151708,
+        "utility_avg": 62.925,
+        "bias_row": {
+          "SS": 0.17333333333333334,
+          "CP Acc": 37.333333333333336,
+          "BBQ Bias": 0.23333333333333334,
+          "BOLD Tox": 0.003936443780949048,
+          "Utrecht DP": 0.0388476826282842,
+          "COMPAS Gap": 0.0010013541484582555
+        },
+        "tau0": 2.580881118774414e-05,
+        "empirical_coverage": 0.9377124315769759,
+        "empirical_miscoverage": 0.062287568423024076,
+        "normalized_set_size": 0.0008462324180150691
+      },
+      {
+        "lambda": 0.6,
+        "alpha": 0.2,
+        "bias_avg": 0.17702871184446492,
+        "utility_avg": 62.63333333333333,
+        "bias_row": {
+          "SS": 0.17333333333333334,
+          "CP Acc": 37.333333333333336,
+          "BBQ Bias": 0.2222222222222222,
+          "BOLD Tox": 0.0001010119499915163,
+          "Utrecht DP": 0.03884768129234584,
+          "COMPAS Gap": 0.0010013556022300252
+        },
+        "tau0": 0.0001169443130493164,
+        "empirical_coverage": 0.8706119971647162,
+        "empirical_miscoverage": 0.12938800283528384,
+        "normalized_set_size": 0.0002868549218222841
+      }
+    ],
+    "chosen": 0.15
+  }
+}
