@@ -112,9 +112,9 @@ def main() -> int:
         payload["per_seed"][str(seed)] = {}
         for variant in args.variants:
             print(f"\n=== seed {seed} | {METHOD_LABELS.get(variant, variant)} ===")
-            key = VARIANT_THRESHOLD_KEY[variant]
+            th_key = VARIANT_THRESHOLD_KEY[variant]
 
-            def make_decoder(ds_name: str, _v=variant, _k=key, _seed=seed):
+            def make_decoder(ds_name: str, _v=variant, _k=th_key, _seed=seed):
                 th = thresholds.get(ds_name, {}).get(_k) if _k else None
                 d = build_decoder(_v, lm, cfg, thresholds=th, masker=masker)
                 d.seed = _seed
@@ -124,7 +124,7 @@ def main() -> int:
             row = flatten(per_ds)
 
             dec = build_decoder(
-                variant, lm, cfg, thresholds=pooled.get(key) if key else None, masker=masker
+                variant, lm, cfg, thresholds=pooled.get(th_key) if th_key else None, masker=masker
             )
             dec.seed = seed
             accs: List[float] = []
@@ -132,8 +132,8 @@ def main() -> int:
                                   max_new_tokens=cfg["data"]["gsm8k_max_new_tokens"],
                                   greedy=True, progress=progress, seed=seed)
             accs.append(r["acc"])
-            for key in ("strategyqa", "arc_easy", "piqa"):
-                rr = E.eval_choices(dec, util_data[key], key, bs, progress=progress)
+            for task in ("strategyqa", "arc_easy", "piqa"):
+                rr = E.eval_choices(dec, util_data[task], task, bs, progress=progress)
                 rr.pop("predictions", None)
                 accs.append(rr["acc"])
 
