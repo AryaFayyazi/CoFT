@@ -23,7 +23,8 @@ wandb/
 # Machine-local environment
 .env.local
 
+# Experiment outputs are not shipped: the paper carries the numbers, this
+# repository carries the implementation that produces them.  `make all`
+# regenerates everything under results/ locally.
+results/*
 !results/.gitkeep
-
-# Reproduced results ARE committed (results/<model>/*.json, TABLES.md, figures)
-# so the numbers in the README can be checked without a GPU.

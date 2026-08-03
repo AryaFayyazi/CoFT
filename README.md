@@ -85,7 +85,7 @@ the fused distribution never concentrates on it and the certified set excludes i
 
 ### Worked examples
 
-`examples/worked_examples.py` reproduces the step-by-step tables of App. D.3 on a
+`examples/worked_examples.py` walks through the step-by-step examples of App. D.3 on a
 real model: for each example it prints the factual, masked and fused
 distributions over the top candidates, the certification decision for each, and
 what vanilla decoding and COFT actually generate.
@@ -134,10 +134,11 @@ continuation — so calibration never rewards the behaviour being filtered.
 
 **Ranking is noise-aware.** Each bias metric reports the standard error of its
 headline value, and the average-rank computation treats differences it cannot resolve as ties.
-Without this, a column sitting at its floor still hands out a full ordering: BOLD toxicity spans
-0.0001–0.0016 across all five methods on Mistral — entirely inside its own standard error — yet
-would contribute a sixth of the average rank on the strength of that noise. Columns with real
-signal (SS, CP Acc, BBQ) order methods exactly as before.
+Without this, a column whose values sit at its floor — which BOLD toxicity does on
+instruction-tuned models, where continuations are almost never toxic — still hands out a full
+ordering and contributes a sixth of the average rank on the strength of that noise. Columns whose
+spread exceeds their standard error order methods exactly as before, and the tolerance is
+computed per column per run rather than fixed.
 
 **Hyper-parameters are selected, not assumed.** §4.5 picks `λ` and `α` on a validation split by
 the Pareto-knee rule — the smallest value within 2% of the knee — and the reported tables then use
@@ -191,39 +192,6 @@ without it, certification would be invisible to every likelihood-based benchmark
 **Perplexity** is reported for the method's corrected distribution `π̂` — the density a decoding
 intervention actually changes — since the certified set is a sampling constraint, not a density.
 `--ppl-certified` scores under the certified policy instead.
-
----
-
-## Results
-
-Two models, the paper's main-text pair: **Mistral-7B-Instruct-v0.2** and **LLaMA-2-13B**.
-600–800 evaluation items per bias benchmark, three seeds, with `λ` and `α` selected on a
-disjoint validation split by the Pareto-knee rule (Sec. 4.5) and then used, not assumed.
-Full tables in [`results/TABLES.md`](results/TABLES.md), raw JSON under `results/<model>/`,
-figures at `results/<model>/fig*.pdf`.  `scripts/verify_claims.py` re-checks the reported
-numbers against the paper's stated values on whatever results are present.
-
-<!--RESULTS-->
-
-### Two masking configurations on the utility tasks
-
-The span detector fires on ordinary task prompts, and in a GSM8K word problem "her friends" is a
-coreference device rather than a protected attribute — masking it removes the referent. That is
-the coreference strain of App. D.2, for which the prescribed remedy is span whitelisting. Both
-configurations are reported so the effect is attributable:
-
-| | GSM8K | StrategyQA | ARC-easy | PIQA |
-|---|---|---|---|---|
-| Vanilla | — | — | — | — |
-| COFT, spans active on task prompts | — | — | — | — |
-| COFT, masking inactive (`--no-spans`) | — | — | — | — |
-
-### Efficiency
-
-At batch 4 on an H100 the model is memory-bandwidth-bound, so the second branch rides along in
-the same batch nearly free and the measured overhead sits well under the ≤11% envelope. On a
-more compute-bound host (the paper's A6000 at 256 tokens) the margin is larger — the overhead is
-hardware-dependent, and `scripts/run_efficiency.py` measures it for whatever host you run on.
 
 ---
 
