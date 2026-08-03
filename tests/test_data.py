@@ -83,3 +83,15 @@ def test_crows_puts_the_protected_span_in_the_prompt():
         assert it.stereo == it.anti            # the scored remainder is shared
         assert it.meta["modified_stereo"] in it.ctx_stereo
         assert it.meta["modified_anti"] in it.ctx_anti
+
+
+def test_truncate_cuts_at_the_delimiter_but_fails_safe():
+    from coft.data.tasks import GSM8K_STOP
+    from coft.evaluate import _truncate
+
+    text = "The answer is 72.\n\nQuestion: something else\nAnswer: The answer is 9."
+    assert _truncate(text, GSM8K_STOP).strip() == "The answer is 72."
+    # nothing of substance before the delimiter -> keep the original
+    assert _truncate("\nQuestion: x\nAnswer: 5", GSM8K_STOP) == "\nQuestion: x\nAnswer: 5"
+    assert _truncate("no delimiter here", GSM8K_STOP) == "no delimiter here"
+    assert _truncate("anything", None) == "anything"

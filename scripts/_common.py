@@ -34,6 +34,7 @@ __all__ = [
     "get_thresholds",
     "build_masker",
     "apply_selected_hyperparams",
+    "load_utility_datasets",
 ]
 
 
@@ -78,6 +79,39 @@ def save_json(path: Path, payload) -> None:
 
 def load_json(path: Path):
     return json.loads(Path(path).read_text())
+
+
+def load_utility_datasets(cfg: Dict, seed: int, tasks=("gsm8k", "strategyqa", "arc_easy", "piqa")):
+    """Load the utility benchmarks *with sensitive spans attached*.
+
+    This matters more than it looks.  In deployment the span detector runs on
+    every prompt, not only on prompts from a bias benchmark -- and it fires on
+    ordinary task data: GSM8K's word problems are full of pronouns and family
+    roles, PIQA's goals contain "he"/"she".  If the utility items are evaluated
+    with an empty span list then ``M(p) == p``, both COFT branches coincide, and
+    the method degenerates to vanilla decoding on exactly the tasks that are
+    supposed to demonstrate it preserves utility.
+
+    Two things break when that happens: the utility column is preserved by
+    construction rather than by merit, and -- because UtilityAvg is then constant
+    in ``lambda`` -- the Pareto-knee rule of Sec. 4.5 has no trade-off to balance
+    and degenerates to "pick the largest ``lambda``", i.e. sampling purely from
+    the masked branch.
+    """
+    from coft.data.base import attach_terms
+    from coft.data.tasks import TASK_LOADERS
+    from coft.spans import SensitiveLexicon
+
+    lim = cfg["data"]["utility"]
+    lex = SensitiveLexicon(cfg.get("masking", {}).get("categories"))
+    use_ner = bool(cfg.get("masking", {}).get("use_ner", False))
+    out = {}
+    for name in tasks:
+        if name not in TASK_LOADERS:
+            continue
+        items = TASK_LOADERS[name](limit=lim.get(name), seed=seed)
+        out[name] = attach_terms(items, lex, use_ner=use_ner)
+    return out
 
 
 def apply_selected_hyperparams(cfg: Dict, out_dir: Path, verbose: bool = True) -> Dict:

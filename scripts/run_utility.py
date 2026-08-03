@@ -27,6 +27,7 @@ from _common import (
     base_parser,
     build_masker,
     get_thresholds,
+    load_utility_datasets,
     results_dir,
     save_json,
     set_seed,
@@ -35,7 +36,7 @@ from _common import (
 
 from coft import evaluate as E
 from coft.data.corpora import load_tldr, load_wikitext2
-from coft.data.tasks import load_arc_easy, load_gsm8k, load_piqa, load_strategyqa
+from coft.data.tasks import GSM8K_STOP
 from coft.registry import METHOD_LABELS, build_decoder
 from coft.toxicity import TokenToxicityTable, ToxicityScorer
 
@@ -57,22 +58,14 @@ def main() -> int:
     cfg = apply_selected_hyperparams(cfg, out_dir)
     progress = not args.no_progress
     masker = build_masker(lm, cfg)
-    lim = cfg["data"]["utility"]
     qlim = cfg["data"]["quality"]
     bs = cfg["data"]["batch_size"]
     gbs = cfg["data"]["generation_batch_size"]
     seeds = cfg.get("seeds", [0])
 
     print("loading utility benchmarks ...")
-    data = {}
-    if "gsm8k" in args.tasks:
-        data["gsm8k"] = load_gsm8k(limit=lim["gsm8k"], seed=seeds[0])
-    if "strategyqa" in args.tasks:
-        data["strategyqa"] = load_strategyqa(limit=lim["strategyqa"], seed=seeds[0])
-    if "arc_easy" in args.tasks:
-        data["arc_easy"] = load_arc_easy(limit=lim["arc_easy"], seed=seeds[0])
-    if "piqa" in args.tasks:
-        data["piqa"] = load_piqa(limit=lim["piqa"], seed=seeds[0])
+    wanted = tuple(t for t in ("gsm8k", "strategyqa", "arc_easy", "piqa") if t in args.tasks)
+    data = load_utility_datasets(cfg, seeds[0], tasks=wanted)
     docs = load_wikitext2(limit=qlim["wikitext_docs"]) if "ppl" in args.tasks else []
     tldr = load_tldr(limit=qlim["mauve_samples"]) if "mauve" in args.tasks else []
     for k, v in data.items():
@@ -129,6 +122,7 @@ def main() -> int:
                     dec, data["gsm8k"], "gsm8k", gbs,
                     max_new_tokens=cfg["data"]["gsm8k_max_new_tokens"],
                     greedy=True, progress=progress, seed=seed,
+                    stop_strings=GSM8K_STOP,
                 )
                 r.pop("generations", None)
                 detail["gsm8k"] = r

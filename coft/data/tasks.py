@@ -11,7 +11,19 @@ from typing import List, Optional
 
 from coft.data.base import ChoiceItem, GenItem, hf_kwargs, subsample
 
-__all__ = ["load_gsm8k", "load_strategyqa", "load_arc_easy", "load_piqa", "TASK_LOADERS"]
+__all__ = [
+    "load_gsm8k",
+    "load_strategyqa",
+    "load_arc_easy",
+    "load_piqa",
+    "TASK_LOADERS",
+    "GSM8K_STOP",
+]
+
+#: Delimiters that end a GSM8K answer.  Few-shot prompting makes the model roll
+#: straight into a further "Question: ..." exemplar of its own invention; without
+#: these the exact-match extractor scores that instead of the real answer.
+GSM8K_STOP = ("\nQuestion:", "\n\nQuestion:", "\nQ:")
 
 
 GSM8K_FEWSHOT = [

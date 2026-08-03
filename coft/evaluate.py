@@ -10,7 +10,7 @@ CrowS-Pairs.
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import torch
 from tqdm.auto import tqdm
@@ -31,6 +31,22 @@ __all__ = [
 def _chunks(seq: Sequence, size: int):
     for i in range(0, len(seq), size):
         yield seq[i : i + size]
+
+
+def _truncate(text: str, stop_strings: Optional[Sequence[str]]) -> str:
+    """Cut ``text`` at the earliest of ``stop_strings`` (if any occurs).
+
+    Fails safe: if cutting would throw away everything of substance -- no digits
+    left -- the untruncated text is kept, so a model that emits the delimiter
+    before its answer is not scored as having answered nothing.
+    """
+    if not stop_strings:
+        return text
+    cut = min((text.find(s) for s in stop_strings if text.find(s) >= 0), default=-1)
+    if cut < 0:
+        return text
+    head = text[:cut]
+    return head if any(ch.isdigit() for ch in head) else text
 
 
 def _score_key(res: Dict[str, float], normalize: bool) -> float:
@@ -155,8 +171,15 @@ def eval_generation(
     toxicity_scorer=None,
     progress: bool = True,
     seed: int = 0,
+    stop_strings: Optional[Sequence[str]] = None,
 ) -> Dict[str, float]:
-    """Generate continuations and score them (toxicity for BOLD, EM for GSM8K)."""
+    """Generate continuations and score them (toxicity for BOLD, EM for GSM8K).
+
+    ``stop_strings`` truncates each continuation at the first delimiter that
+    appears.  Few-shot prompts otherwise induce the model to keep going and
+    invent a further exemplar, which pollutes both exact-match extraction and
+    toxicity scoring with text that is not an answer to the question asked.
+    """
     texts: List[str] = []
     empty_steps = 0
     total_steps = 0
@@ -171,7 +194,7 @@ def eval_generation(
             greedy=greedy,
             seed=seed + bi,
         )
-        texts.extend(res.texts)
+        texts.extend(_truncate(t, stop_strings) for t in res.texts)
         empty_steps += res.n_empty_sets
         total_steps += res.n_steps
         if res.n_certified_steps:

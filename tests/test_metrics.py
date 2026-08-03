@@ -154,6 +154,16 @@ def test_extract_final_number():
     assert extract_final_number("no digits here") is None
 
 
+def test_extract_uses_the_first_answer_marker():
+    """Few-shot bleed: the model invents a further Question/Answer block.
+
+    Taking the last marker would score the answer to the model's own
+    hallucinated question, which gets worse the longer it is allowed to run.
+    """
+    text = "48 + 24 = 72. The answer is 72.\n\nQuestion: cost of gas?\nAnswer: The answer is 52."
+    assert extract_final_number(text) == "72"
+
+
 def test_gsm8k_exact_match():
     m = gsm8k_exact_match(["The answer is 72.", "The answer is 5."], ["72", "6"])
     assert m["acc"] == 50.0

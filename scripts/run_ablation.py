@@ -30,6 +30,7 @@ from _common import (
     base_parser,
     build_masker,
     get_thresholds,
+    load_utility_datasets,
     results_dir,
     save_json,
     set_seed,
@@ -38,7 +39,7 @@ from _common import (
 from run_bias import COLUMNS, evaluate_method, flatten, load_bias_datasets, prepare_thresholds
 
 from coft import evaluate as E
-from coft.data.tasks import load_arc_easy, load_gsm8k, load_piqa, load_strategyqa
+from coft.data.tasks import GSM8K_STOP
 from coft.registry import METHOD_LABELS, build_decoder
 from coft.toxicity import ToxicityScorer
 
@@ -88,16 +89,10 @@ def main() -> int:
     seeds = cfg.get("seeds", [0])
     bs = cfg["data"]["batch_size"]
     gbs = cfg["data"]["generation_batch_size"]
-    lim = cfg["data"]["utility"]
 
     print("loading benchmarks ...")
     bias_data, cal_data = load_bias_datasets(cfg, seed=seeds[0])
-    util_data = {
-        "gsm8k": load_gsm8k(limit=lim["gsm8k"], seed=seeds[0]),
-        "strategyqa": load_strategyqa(limit=lim["strategyqa"], seed=seeds[0]),
-        "arc_easy": load_arc_easy(limit=lim["arc_easy"], seed=seeds[0]),
-        "piqa": load_piqa(limit=lim["piqa"], seed=seeds[0]),
-    }
+    util_data = load_utility_datasets(cfg, seeds[0])
     tox = ToxicityScorer(cfg["toxicity"]["model_id"]) if "bold" in bias_data else None
 
     print("calibrating conformal thresholds (per dataset, disjoint slice) ...")
@@ -140,7 +135,8 @@ def main() -> int:
             accs: List[float] = []
             r = E.eval_generation(dec, util_data["gsm8k"], "gsm8k", gbs,
                                   max_new_tokens=cfg["data"]["gsm8k_max_new_tokens"],
-                                  greedy=True, progress=progress, seed=seed)
+                                  greedy=True, progress=progress, seed=seed,
+                                  stop_strings=GSM8K_STOP)
             accs.append(r["acc"])
             for task in ("strategyqa", "arc_easy", "piqa"):
                 rr = E.eval_choices(dec, util_data[task], task, bs, progress=progress)

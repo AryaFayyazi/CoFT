@@ -23,15 +23,23 @@ from typing import Dict, List
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _common import base_parser, build_masker, results_dir, save_json, set_seed, setup
+from _common import (
+    base_parser,
+    build_masker,
+    load_utility_datasets,
+    results_dir,
+    save_json,
+    set_seed,
+    setup,
+)
 from run_ablation import bias_avg
 from run_bias import evaluate_method, flatten, load_bias_datasets
 
 from coft import evaluate as E
 from coft.calibration import collect_calibration_scores
 from coft.data.corpora import load_calibration_corpus  # noqa: F401  (pooled fallback)
-from coft.data.tasks import load_arc_easy, load_piqa, load_strategyqa
-from coft.registry import build_decoder
+from coft.data.tasks import GSM8K_STOP
+from coft.registry import build_decoder, merge_configs
 from coft.toxicity import ToxicityScorer
 
 DEFAULT_LAMBDAS = [0.0, 0.2, 0.4, 0.6, 0.7, 0.8, 1.0]
@@ -78,11 +86,14 @@ def main() -> int:
         n = max(2, int(len(bias_data[k]) * args.val_fraction))
         bias_data[k] = bias_data[k][:n]
         print(f"  {k}: {len(bias_data[k])} validation items")
-    util_data = {
-        "strategyqa": load_strategyqa(limit=max(8, lim["strategyqa"] // 3), seed=seed + 1000),
-        "arc_easy": load_arc_easy(limit=max(8, lim["arc_easy"] // 3), seed=seed + 1000),
-        "piqa": load_piqa(limit=max(8, lim["piqa"] // 3), seed=seed + 1000),
-    }
+    # Utility items carry sensitive spans too (see load_utility_datasets): without
+    # them UtilityAvg is constant in lambda and the Pareto knee has no trade-off
+    # to balance, degenerating to "pick the largest lambda".  GSM8K is included
+    # because it is the task where fusion visibly costs something.
+    val_cfg = merge_configs(cfg, {"data": {"utility": {
+        k: max(8, (lim.get(k) or 24) // 3) for k in ("gsm8k", "strategyqa", "arc_easy", "piqa")
+    }}})
+    util_data = load_utility_datasets(val_cfg, seed + 1000)
     tox = ToxicityScorer(cfg["toxicity"]["model_id"]) if "bold" in bias_data else None
 
     # ---- one calibration pass per dataset covering every lambda at once ----
@@ -124,6 +135,12 @@ def main() -> int:
         per_ds = evaluate_method(make_decoder, bias_data, cfg, tox, progress, seed)
         row = flatten(per_ds)
         accs = []
+        rg = E.eval_generation(
+            dec, util_data["gsm8k"], "gsm8k", bs,
+            max_new_tokens=cfg["data"]["gsm8k_max_new_tokens"],
+            greedy=True, progress=progress, seed=seed, stop_strings=GSM8K_STOP,
+        )
+        accs.append(rg["acc"])
         for key in ("strategyqa", "arc_easy", "piqa"):
             rr = E.eval_choices(dec, util_data[key], key, bs, progress=progress)
             rr.pop("predictions", None)

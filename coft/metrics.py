@@ -264,9 +264,17 @@ _NUM_RE = re.compile(r"-?\$?\d[\d,]*\.?\d*")
 
 
 def extract_final_number(text: str) -> Optional[str]:
-    """Pull GSM8K's predicted answer: the number after 'the answer is', else the last number."""
+    """Pull GSM8K's predicted answer: the number after 'the answer is', else the last number.
+
+    The **first** marker is used, not the last.  A few-shot prompt makes the model
+    run on past its answer and invent a further ``Question: ... Answer: ...``
+    block; taking the last marker would score the answer to the model's own
+    hallucinated question, which gets *worse* the more tokens it is allowed to
+    generate.  Callers should also pass ``stop_strings`` so the continuation is
+    truncated at the delimiter in the first place.
+    """
     lowered = text.lower()
-    marker = lowered.rfind("the answer is")
+    marker = lowered.find("the answer is")
     segment = text[marker:] if marker >= 0 else text
     matches = _NUM_RE.findall(segment)
     if not matches and marker >= 0:
