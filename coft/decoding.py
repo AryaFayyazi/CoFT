@@ -239,6 +239,17 @@ class BaseDecoder:
         eos = self.lm.eos_token_id
 
         res = GenerationResult(texts=[], tokens=produced)
+
+        # Book-keeping counters live on-device and are read back once, after the
+        # loop.  Touching a CUDA tensor from Python forces a synchronisation, so
+        # doing it per item per step would add O(batch) stalls to every decode
+        # step -- and those stalls would land squarely in the latency that
+        # Table 3 is supposed to measure.  The loop below performs exactly one
+        # device-to-host transfer per step.
+        zeros = lambda dt: torch.zeros((), dtype=dt, device=dev)  # noqa: E731
+        c_steps, c_cert_steps, c_empty = zeros(torch.long), zeros(torch.long), zeros(torch.long)
+        c_set_size = zeros(torch.float)
+
         for t in range(max_new_tokens):
             logits = {b: state.logits_for(b) for b in state.names}
             out = self.step_distribution(logits, t)
@@ -247,26 +258,34 @@ class BaseDecoder:
             tokens = sample_from_probs(probs, top_p=self.top_p, greedy=greedy, generator=gen)
             tokens = torch.where(finished, torch.full_like(tokens, eos), tokens)
 
-            res.n_steps += int((~finished).sum().item())
+            live = ~finished
+            c_steps += live.sum()
             if out.certified_mask is not None:
-                live = (~finished)
-                res.n_certified_steps += int(live.sum().item())
-                res.set_size_sum += float((out.certified_mask.sum(-1) * live).sum().item())
+                c_cert_steps += live.sum()
+                c_set_size += (out.certified_mask.sum(-1) * live).sum()
                 if out.empty_set is not None:
-                    res.n_empty_sets += int((out.empty_set & live).sum().item())
+                    c_empty += (out.empty_set & live).sum()
 
+            # the single sync: tokens and liveness together
+            tok_list, live_list = torch.stack([tokens, live.long()]).tolist()
             for i in range(n):
-                if not finished[i]:
-                    produced[i].append(int(tokens[i]))
+                if live_list[i]:
+                    produced[i].append(tok_list[i])
+
             if stop_on_eos:
                 finished = finished | (tokens == eos)
-                if bool(finished.all()):
+                # derived from the values just transferred, so no extra sync
+                if all((not lv) or tk == eos for lv, tk in zip(live_list, tok_list)):
                     break
             state = self.lm.step(state, tokens)
 
         if dev.type == "cuda":
             torch.cuda.synchronize()
         res.wall_time = time.perf_counter() - t0
+        res.n_steps = int(c_steps)
+        res.n_certified_steps = int(c_cert_steps)
+        res.set_size_sum = float(c_set_size)
+        res.n_empty_sets = int(c_empty)
         res.texts = [
             self.lm.tokenizer.decode(
                 [tk for tk in seq if tk != eos], skip_special_tokens=True
