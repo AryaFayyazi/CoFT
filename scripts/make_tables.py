@@ -109,6 +109,24 @@ def render_utility(payload: Dict) -> Dict[str, str]:
     }
 
 
+def render_utility_nospans(payload: Dict) -> Dict[str, str]:
+    out = render_utility(payload)
+    label = payload["model"]["label"]
+    note = (
+        "\n\n_Masking inactive on task prompts (`--no-spans`): `M(p) == p`, so both COFT "
+        "branches coincide and the method reduces to vanilla decoding here. Compare against "
+        "Table 2 above, where the span detector fires on task prompts, to see where the "
+        "utility cost actually comes from._"
+    )
+    return {
+        "md": out["md"].replace(
+            f"### Table 2 -- Utility & quality ({label})",
+            f"### Table 2b -- Utility & quality, masking inactive ({label})",
+        ) + note,
+        "tex": out["tex"].replace("tab:utility-", "tab:utility-nospans-"),
+    }
+
+
 def render_efficiency(payload: Dict) -> Dict[str, str]:
     table = payload["table"]
     headers = ["Method", "tok/s ^", "Overhead", "Peak Mem (GB)"]
@@ -147,6 +165,7 @@ def render_ablation(payload: Dict) -> Dict[str, str]:
 RENDERERS = {
     "table1_bias.json": render_bias,
     "table2_utility.json": render_utility,
+    "table2_utility_nospans.json": render_utility_nospans,
     "table3_efficiency.json": render_efficiency,
     "table4_ablation.json": render_ablation,
 }

@@ -150,15 +150,19 @@ def check_utility(payload: Dict, rep: Report) -> None:
     if "coft" not in table or "vanilla" not in table:
         return
     coft, vanilla = table["coft"], table["vanilla"]
+    spans = payload.get("spans_active", True)
+    tag = "spans active on task prompts" if spans else "masking inactive"
 
     deltas = {c: coft[c] - vanilla[c] for c in UTILITY_ACC if c in coft and c in vanilla}
     if deltas:
         worst = max(abs(v) for v in deltas.values())
         verdict = PASS if worst <= 0.2 else (SOFT if worst <= 1.0 else FAIL)
-        rep.add(verdict, "COFT utility vs. Vanilla",
+        rep.add(verdict, f"COFT utility vs. Vanilla [{tag}]",
                 "within +-0.2 accuracy points",
                 f"max |delta| {worst:.2f}  ("
                 + ", ".join(f"{c} {v:+.2f}" for c, v in deltas.items()) + ")")
+    if not spans:
+        return   # the baseline-cost comparisons below only make sense in deployment mode
 
     # SDD / DExperts are supposed to pay a visible utility cost that COFT avoids
     for m, label in (("sdd", "SDD"), ("dexperts", "DExperts")):
@@ -277,6 +281,7 @@ def check_sweeps(payload: Dict, rep: Report) -> None:
 CHECKS = [
     ("table1_bias.json", check_bias),
     ("table2_utility.json", check_utility),
+    ("table2_utility_nospans.json", check_utility),
     ("table3_efficiency.json", check_efficiency),
     ("table4_ablation.json", check_ablation),
     ("sweeps.json", check_sweeps),
@@ -305,7 +310,8 @@ def main() -> int:
         for fname, check in CHECKS:
             f = mdir / fname
             if not f.exists():
-                rep.add(SKIP, fname.replace(".json", ""), "-", "results file missing")
+                if fname != "table2_utility_nospans.json":   # optional variant
+                    rep.add(SKIP, fname.replace(".json", ""), "-", "results file missing")
                 continue
             try:
                 check(json.loads(f.read_text()), rep)

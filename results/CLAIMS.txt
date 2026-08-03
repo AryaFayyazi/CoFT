@@ -1,0 +1,129 @@
+
+==============================================================================
+llama2-13b
+==============================================================================
+  [PASS] bias reduction vs. Vanilla                             
+           paper:      30-55% (median 38%)
+           reproduced: median +40%, range -521..+65%  [SS +46%, BBQ Bias +38%, BOLD Tox -521%, Utrecht DP +41%, COMPAS Gap +65%, CP Acc -1%]
+  [SOFT] COFT vs. DT-CD (strongest baseline)                    
+           paper:      better on every dataset, by 20-40%
+           reproduced: better on 4/6 (worse on BOLD Tox, CP Acc); mean gain -84%
+  [SOFT] COFT average rank                                      
+           paper:      1.0 (best on every column)
+           reproduced: 2.67  (sdd 2.11, coft 2.67, dexperts 2.83, dtcd 3.44, vanilla 3.94)
+  [FAIL] CrowS-Pairs accuracy gain                              
+           paper:      +2.2 to +2.4 points over Vanilla
+           reproduced: -0.50 points (34.0 -> 33.5)
+  [PASS] Theorem 1: empirical coverage                          
+           paper:      >= 1 - alpha = 0.90
+           reproduced: mean 0.990 over 15 (dataset, seed) cells; worst crows 0.980
+  [FAIL] COFT utility vs. Vanilla [spans active on task prompts]
+           paper:      within +-0.2 accuracy points
+           reproduced: max |delta| 8.00  (GSM8K -8.00, StrategyQA -3.25, ARC-easy -0.50, PIQA -0.75)
+  [PASS] SDD pays a utility cost COFT avoids                    
+           paper:      0.3-1.1 point drops
+           reproduced: worst SDD delta -11.75 vs. COFT worst -8.00
+  [SOFT] DExperts pays a utility cost COFT avoids               
+           paper:      0.3-1.1 point drops
+           reproduced: worst DExperts delta -1.50 vs. COFT worst -8.00
+  [PASS] PPL indistinguishable from Vanilla                     
+           paper:      difference <= 0.1
+           reproduced: |delta| 0.000  (4.330 -> 4.330)
+  [PASS] MAUVE indistinguishable from Vanilla                   
+           paper:      difference <= 0.01
+           reproduced: |delta| 0.001  (0.036 -> 0.035)
+  [SOFT] COFT utility vs. Vanilla [masking inactive]            
+           paper:      within +-0.2 accuracy points
+           reproduced: max |delta| 0.50  (GSM8K +0.00, StrategyQA +0.00, ARC-easy +0.00, PIQA -0.50)
+  [FAIL] table3_efficiency                                      
+           paper:      -
+           reproduced: error while checking: cannot access local variable 'verdict' where it is not associated with a value
+  [SOFT] full COFT is the best ablation variant                 
+           paper:      0.129 < {0.149, 0.158, 0.171}
+           reproduced: full 0.1590 vs no-fusion 0.2130, single-branch 0.1593, no-CP 0.1594
+  [PASS] fusion contributes more than CP alone                  
+           paper:      fusion-only 0.149 < CP-only 0.171
+           reproduced: fusion-only 0.159 vs CP-only 0.213
+  [SOFT] dual-branch CP beats single-branch CP                  
+           paper:      0.129 < 0.158
+           reproduced: dual 0.1590 vs single 0.1593
+  [PASS] miscoverage tracks the target alpha (Table 20)         
+           paper:      empirical ~ target, slightly conservative
+           reproduced: a=0.02->0.013, a=0.05->0.025, a=0.1->0.049, a=0.15->0.091, a=0.2->0.124
+  [PASS] selected alpha (Pareto knee, Sec. 4.5)                 
+           paper:      alpha = 0.10
+           reproduced: alpha = 0.02
+  [PASS] bias decreases as fusion strengthens                   
+           paper:      monotone decrease in lambda
+           reproduced: 0:0.242, 0.2:0.244, 0.4:0.235, 0.6:0.219, 0.7:0.214, 0.8:0.202, 1:0.144
+  [PASS] selected lambda (Pareto knee, Sec. 4.5)                
+           paper:      lambda ~ 0.6
+           reproduced: lambda = 0.8
+
+  10 pass, 6 soft, 3 fail, 0 skipped
+
+==============================================================================
+mistral-7b-instruct
+==============================================================================
+  [PASS] bias reduction vs. Vanilla                             
+           paper:      30-55% (median 38%)
+           reproduced: median +53%, range -9..+91%  [SS +52%, BBQ Bias +37%, BOLD Tox +91%, Utrecht DP +53%, COMPAS Gap +54%, CP Acc -9%]
+  [SOFT] COFT vs. DT-CD (strongest baseline)                    
+           paper:      better on every dataset, by 20-40%
+           reproduced: better on 5/6 (worse on CP Acc); mean gain +44%
+  [FAIL] COFT average rank                                      
+           paper:      1.0 (best on every column)
+           reproduced: 2.61  (dexperts 2.03, sdd 2.50, coft 2.61, dtcd 3.53, vanilla 4.33)
+  [FAIL] CrowS-Pairs accuracy gain                              
+           paper:      +2.2 to +2.4 points over Vanilla
+           reproduced: -3.00 points (32.3 -> 29.3)
+  [PASS] Theorem 1: empirical coverage                          
+           paper:      >= 1 - alpha = 0.90
+           reproduced: mean 0.982 over 15 (dataset, seed) cells; worst crows 0.949
+  [FAIL] COFT utility vs. Vanilla [spans active on task prompts]
+           paper:      within +-0.2 accuracy points
+           reproduced: max |delta| 12.67  (GSM8K -12.67, StrategyQA -3.00, ARC-easy -0.75, PIQA -0.50)
+  [SOFT] SDD pays a utility cost COFT avoids                    
+           paper:      0.3-1.1 point drops
+           reproduced: worst SDD delta -10.67 vs. COFT worst -12.67
+  [SOFT] DExperts pays a utility cost COFT avoids               
+           paper:      0.3-1.1 point drops
+           reproduced: worst DExperts delta -1.75 vs. COFT worst -12.67
+  [PASS] PPL indistinguishable from Vanilla                     
+           paper:      difference <= 0.1
+           reproduced: |delta| 0.000  (6.382 -> 6.382)
+  [PASS] MAUVE indistinguishable from Vanilla                   
+           paper:      difference <= 0.01
+           reproduced: |delta| 0.005  (0.028 -> 0.033)
+  [SOFT] COFT utility vs. Vanilla [masking inactive]            
+           paper:      within +-0.2 accuracy points
+           reproduced: max |delta| 0.67  (GSM8K +0.67, StrategyQA +0.25, ARC-easy +0.00, PIQA -0.25)
+  [FAIL] table3_efficiency                                      
+           paper:      -
+           reproduced: error while checking: cannot access local variable 'verdict' where it is not associated with a value
+  [SOFT] full COFT is the best ablation variant                 
+           paper:      0.129 < {0.149, 0.158, 0.171}
+           reproduced: full 0.1689 vs no-fusion 0.2202, single-branch 0.1694, no-CP 0.1683
+  [PASS] fusion contributes more than CP alone                  
+           paper:      fusion-only 0.149 < CP-only 0.171
+           reproduced: fusion-only 0.168 vs CP-only 0.220
+  [SOFT] dual-branch CP beats single-branch CP                  
+           paper:      0.129 < 0.158
+           reproduced: dual 0.1689 vs single 0.1694
+  [PASS] miscoverage tracks the target alpha (Table 20)         
+           paper:      empirical ~ target, slightly conservative
+           reproduced: a=0.02->0.006, a=0.05->0.018, a=0.1->0.040, a=0.15->0.063, a=0.2->0.136
+  [PASS] selected alpha (Pareto knee, Sec. 4.5)                 
+           paper:      alpha = 0.10
+           reproduced: alpha = 0.05
+  [PASS] bias decreases as fusion strengthens                   
+           paper:      monotone decrease in lambda
+           reproduced: 0:0.228, 0.2:0.207, 0.4:0.195, 0.6:0.190, 0.7:0.182, 0.8:0.172, 1:0.131
+  [PASS] selected lambda (Pareto knee, Sec. 4.5)                
+           paper:      lambda ~ 0.6
+           reproduced: lambda = 0.7
+
+  9 pass, 6 soft, 4 fail, 0 skipped
+
+==============================================================================
+TOTAL: 19 pass, 12 soft, 7 fail, 0 skipped
