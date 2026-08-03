@@ -191,14 +191,22 @@ def check_efficiency(payload: Dict, rep: Report) -> None:
     oh = table["coft"].get("overhead_pct")
     if oh is None or oh != oh:
         return
-    verdict = PASS if oh <= 11.0 else (SOFT if oh <= 25.0 else FAIL)
-    others = ", ".join(
+    # A negative overhead is not a good result, it is a broken measurement:
+    # COFT evaluates two branches, so it cannot outrun single-branch decoding.
+    # Treating it as a pass would let a contaminated timing window through.
+    if oh < -2.0:
+        verdict = FAIL
+    elif oh < 0.0:
+        verdict = SOFT
+    else:
+        others = ", ".join(
         f"{m} {table[m]['overhead_pct']:.1f}%"
         for m in table if table[m].get("overhead_pct") is not None
     )
+    note = "  <- non-physical: two branches cannot beat one" if oh < -2.0 else ""
     rep.add(verdict, "COFT decoding overhead",
             "<= 11% (one extra cached forward pass)",
-            f"{oh:.1f}%   [{others}]")
+            f"{oh:.1f}%   [{others}]{note}")
 
     mem = table["coft"].get("peak_mem_gb")
     base = table.get("vanilla", {}).get("peak_mem_gb")
@@ -219,23 +227,28 @@ def check_ablation(payload: Dict, rep: Report) -> None:
     single = t["coft_single_branch"]["BiasAvg"]
     no_cp = t["coft_no_cp"]["BiasAvg"]
 
-    verdict = PASS if full < min(no_fusion, single, no_cp) else FAIL
-    rep.add(verdict, "full COFT is the best ablation variant",
+    def _beats(a: float, b: float, rel: float = 0.01) -> str:
+        """PASS only on a margin that survives rounding; ties are reported as ties."""
+        if a < b * (1.0 - rel):
+            return PASS
+        return SOFT if a <= b * (1.0 + rel) else FAIL
+
+    others = min(no_fusion, single, no_cp)
+    rep.add(_beats(full, others), "full COFT is the best ablation variant",
             "0.129 < {0.149, 0.158, 0.171}",
-            f"full {full:.3f} vs no-fusion {no_fusion:.3f}, "
-            f"single-branch {single:.3f}, no-CP {no_cp:.3f}")
+            f"full {full:.4f} vs no-fusion {no_fusion:.4f}, "
+            f"single-branch {single:.4f}, no-CP {no_cp:.4f}")
 
     # fusion should contribute more than CP alone
-    verdict = PASS if no_cp < no_fusion else SOFT
+    verdict = _beats(no_cp, no_fusion)
     rep.add(verdict, "fusion contributes more than CP alone",
             "fusion-only 0.149 < CP-only 0.171",
             f"fusion-only {no_cp:.3f} vs CP-only {no_fusion:.3f}")
 
     # dual-branch CP must beat single-branch CP
-    verdict = PASS if full < single else FAIL
-    rep.add(verdict, "dual-branch CP beats single-branch CP",
+    rep.add(_beats(full, single), "dual-branch CP beats single-branch CP",
             "0.129 < 0.158",
-            f"dual {full:.3f} vs single {single:.3f}")
+            f"dual {full:.4f} vs single {single:.4f}")
 
 
 def check_sweeps(payload: Dict, rep: Report) -> None:
