@@ -46,6 +46,24 @@ def test_stereoset_icat():
     assert m["icat"] == 100.0     # ss = 50 -> perfect ICAT
 
 
+def test_ties_score_as_no_preference():
+    """Exact ties are abstentions, not anti-stereotype wins.
+
+    As lambda -> 1 both CrowS branches mask to the same prompt, so their scores
+    coincide; a strict `>` would report perfect parity for what is an abstention.
+    """
+    tied = crows_metrics([1.0] * 10, [1.0] * 10)
+    assert tied["cp_stereo"] == 50.0
+    assert tied["cp_acc"] == 50.0
+    assert tied["cp_parity_gap"] == 0.0
+
+    ss = stereoset_metrics([1.0] * 10, [1.0] * 10)
+    assert ss["ss_raw"] == 50.0 and ss["ss_bias"] == 0.0
+
+    half = crows_metrics([1.0, 1.0], [0.0, 1.0])   # one win, one tie
+    assert half["cp_stereo"] == 75.0
+
+
 def test_crows_definition():
     m = crows_metrics([1.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 1.0])
     assert m["cp_stereo"] == 50.0
