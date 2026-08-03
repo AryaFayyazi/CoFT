@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "COFT: Counterfactual-Conformal Decoding for Fair Chain-of-Thought Reasoning in Large Language Models"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = { text = "Apache-2.0" }
 authors = [
     { name = "Arya Fayyazi", email = "afayyazi@usc.edu" },
     { name = "Mehdi Kamal" },
@@ -17,7 +17,7 @@ authors = [
 keywords = ["conformal prediction", "fairness", "llm", "decoding", "counterfactual"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [

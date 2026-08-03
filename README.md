@@ -372,4 +372,4 @@ slices, finite thresholds, non-empty certified sets, and empirical coverage near
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Apache-2.0 — see [LICENSE](LICENSE).

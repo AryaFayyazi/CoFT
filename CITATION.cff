@@ -7,7 +7,7 @@ abstract: >-
   distribution-free marginal validity guarantees (under exchangeability) for any
   frozen causal language model.
 type: software
-license: MIT
+license: Apache-2.0
 repository-code: "https://github.com/AryaFayyazi/CoFT"
 version: "1.0.0"
 authors:
