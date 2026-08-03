@@ -3,7 +3,7 @@
 Reference implementation of
 
 > **COFT: Counterfactual-Conformal Decoding for Fair Chain-of-Thought Reasoning in Large Language Models**
-> Arya Fayyazi, Mehdi Kamal, Massoud Pedram — *ICML 2026*
+> Arya Fayyazi, Mehdi Kamal and Massoud Pedram — *ICML 2026*
 
 COFT is a **training-free decoding method** that applies token-level fairness control at decode
 time, with distribution-free *marginal* validity guarantees (under exchangeability) for any frozen
@@ -313,3 +313,5 @@ slices, finite thresholds, non-empty certified sets, and empirical coverage near
 ## License
 
 Apache-2.0 — see [LICENSE](LICENSE).
+
+
