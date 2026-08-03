@@ -7,6 +7,22 @@ The claim under test is that COFT "matches vanilla on utility within +-0.2
 points" while SDD/DExperts "incur 0.3-1.1 point drops", and that perplexity and
 MAUVE stay indistinguishable from vanilla.
 
+Two masking configurations
+--------------------------
+The span detector fires on ordinary task data -- GSM8K word problems are full of
+pronouns and family roles -- and in deployment it runs on every prompt.  But in a
+math word problem "her friends" is a *coreference device*, not a protected
+attribute, and masking it destroys the referent; the paper calls this coreference
+strain and prescribes span whitelisting (App. D.2).
+
+Both configurations are therefore reported, because the comparison is what
+localises the cost:
+
+``default``      spans active on task prompts, as in deployment.
+``--no-spans``   masking inactive, so ``M(p) == p``, both branches coincide and
+                 COFT reduces to vanilla decoding on these tasks.  This is the
+                 configuration under which "utility preserved" is trivially true.
+
 Note on perplexity: it is reported for the method's *corrected* next-token
 distribution ``pi_hat`` (the quantity a decoding intervention actually changes),
 which is the usual convention for decoding-time methods -- the certified set is
@@ -50,6 +66,8 @@ def main() -> int:
     ap.add_argument("--tasks", nargs="*", default=["gsm8k", "strategyqa", "arc_easy", "piqa", "ppl", "mauve"])
     ap.add_argument("--ppl-certified", action="store_true",
                     help="score perplexity under the certified policy instead of pi_hat")
+    ap.add_argument("--no-spans", action="store_true",
+                    help="evaluate with masking inactive on task prompts (see the module docstring)")
     ap.add_argument("--force-calibration", action="store_true")
     args = ap.parse_args()
 
@@ -66,6 +84,15 @@ def main() -> int:
     print("loading utility benchmarks ...")
     wanted = tuple(t for t in ("gsm8k", "strategyqa", "arc_easy", "piqa") if t in args.tasks)
     data = load_utility_datasets(cfg, seeds[0], tasks=wanted)
+    if args.no_spans:
+        # Masking inactive on task prompts: M(p) == p, so both COFT branches
+        # coincide and the method reduces to vanilla decoding here.  Reported
+        # alongside the span-active run to localise where the utility cost comes
+        # from -- see the module docstring.
+        for items in data.values():
+            for it in items:
+                it.terms = []
+        print("  [--no-spans] sensitive spans cleared from all task prompts")
     docs = load_wikitext2(limit=qlim["wikitext_docs"]) if "ppl" in args.tasks else []
     tldr = load_tldr(limit=qlim["mauve_samples"]) if "mauve" in args.tasks else []
     for k, v in data.items():
@@ -89,7 +116,13 @@ def main() -> int:
             toxicity_model=cfg["toxicity"]["model_id"], verbose=False,
         ).values
 
-    payload = {"model": cfg["model"], "seeds": seeds, "columns": COLUMNS, "per_seed": {}}
+    payload = {
+        "model": cfg["model"],
+        "seeds": seeds,
+        "columns": COLUMNS,
+        "spans_active": not args.no_spans,
+        "per_seed": {},
+    }
 
     # Only MAUVE is stochastic here: GSM8K is decoded greedily, and the
     # multiple-choice tasks and perplexity are teacher-forced likelihoods.  The
@@ -158,7 +191,8 @@ def main() -> int:
                     acc.setdefault(col, []).append(val)
         mean_rows[method] = {c: sum(v) / len(v) for c, v in acc.items()}
     payload["table"] = mean_rows
-    save_json(out_dir / "table2_utility.json", payload)
+    name = "table2_utility_nospans.json" if args.no_spans else "table2_utility.json"
+    save_json(out_dir / name, payload)
 
     print("\n--- Table 2 (mean over seeds) ---")
     cols = [c for c in COLUMNS if any(c in r for r in mean_rows.values())]

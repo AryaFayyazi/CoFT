@@ -1,0 +1,394 @@
+{
+  "model": {
+    "key": "mistral-7b-instruct",
+    "label": "Mistral-7B-Instruct",
+    "model_id": "mistralai/Mistral-7B-Instruct-v0.2",
+    "dtype": "bfloat16",
+    "device_map": {
+      "": 0
+    }
+  },
+  "seeds": [
+    0
+  ],
+  "per_seed": {
+    "0": {
+      "coft_full": {
+        "bias_row": {
+          "SS": 0.07333333333333325,
+          "CP Acc": 32.33333333333333,
+          "BBQ Bias": 0.18,
+          "BOLD Tox": 0.0002484292238477792,
+          "Utrecht DP": 0.06345202894459445,
+          "COMPAS Gap": 0.01953213072629978
+        },
+        "bias_avg": 0.16887209814912366,
+        "utility_avg": 63.2,
+        "utility_accs": [
+          39.0,
+          61.0,
+          73.2,
+          79.6
+        ],
+        "per_dataset": {
+          "stereoset": {
+            "ss_bias": 0.07333333333333325,
+            "ss_raw": 53.666666666666664,
+            "n": 300,
+            "lms": 51.0,
+            "icat": 47.26,
+            "empirical_coverage": 0.9570602905436497
+          },
+          "crows": {
+            "cp_stereo": 67.66666666666667,
+            "cp_acc": 32.33333333333333,
+            "cp_parity_gap": 17.66666666666667,
+            "n": 300,
+            "empirical_coverage": 0.9476720469031477
+          },
+          "bbq": {
+            "bbq_bias": 0.18,
+            "bbq_acc": 38.0,
+            "n": 300,
+            "n_ambig": 150,
+            "n_disambig": 150,
+            "bbq_bias_score": -0.4193548387096774,
+            "bbq_bias_disambig": 0.08666666666666667,
+            "bbq_acc_disambig": 64.66666666666667,
+            "empirical_coverage": 1.0
+          },
+          "bold": {
+            "toxicity": 0.0002484292238477792,
+            "toxicity_rate": 0.0,
+            "toxicity_max": 0.014349393546581268,
+            "n": 200,
+            "toxicity_by_domain": {
+              "gender": 0.00020514796263645016,
+              "political_ideology": 0.0005804713634158057,
+              "profession": 4.1808893911365885e-05,
+              "race": 0.00027741796586677975,
+              "religious_ideology": 4.681607060774695e-05
+            },
+            "empty_set_rate": 0.0,
+            "mean_certified_set": 346.7588484316246
+          },
+          "utrecht": {
+            "dp_gap": 0.06345202894459445,
+            "group_rates": {
+              "female": 0.8550558318342782,
+              "male": 0.9185078607788727,
+              "other": 0.9990241527557373
+            },
+            "group_counts": {
+              "female": 113,
+              "male": 134,
+              "other": 3
+            },
+            "n_groups": 2,
+            "n_groups_seen": 3,
+            "empirical_coverage": 1.0
+          },
+          "compas": {
+            "dp_gap": 0.01953213072629978,
+            "group_rates": {
+              "African-American": 0.9827321132803275,
+              "Caucasian": 0.9631999825540277
+            },
+            "group_counts": {
+              "African-American": 153,
+              "Caucasian": 97
+            },
+            "n_groups": 2,
+            "n_groups_seen": 2,
+            "empirical_coverage": 1.0
+          }
+        }
+      },
+      "coft_no_fusion": {
+        "bias_row": {
+          "SS": 0.15999999999999992,
+          "CP Acc": 36.333333333333336,
+          "BBQ Bias": 0.38,
+          "BOLD Tox": 0.00016901875695111813,
+          "Utrecht DP": 0.11981323919049403,
+          "COMPAS Gap": 0.024389539804811844
+        },
+        "bias_avg": 0.22017307740315392,
+        "utility_avg": 65.675,
+        "utility_accs": [
+          46.0,
+          63.5,
+          73.6,
+          79.6
+        ],
+        "per_dataset": {
+          "stereoset": {
+            "ss_bias": 0.15999999999999992,
+            "ss_raw": 57.99999999999999,
+            "n": 300,
+            "lms": 60.0,
+            "icat": 50.400000000000006,
+            "empirical_coverage": 0.9454376895607546
+          },
+          "crows": {
+            "cp_stereo": 63.666666666666664,
+            "cp_acc": 36.333333333333336,
+            "cp_parity_gap": 13.666666666666664,
+            "n": 300,
+            "empirical_coverage": 0.9225142122382806
+          },
+          "bbq": {
+            "bbq_bias": 0.38,
+            "bbq_acc": 6.666666666666667,
+            "n": 300,
+            "n_ambig": 150,
+            "n_disambig": 150,
+            "bbq_bias_score": -0.18571428571428572,
+            "bbq_bias_disambig": 0.05333333333333334,
+            "bbq_acc_disambig": 88.66666666666667,
+            "empirical_coverage": 1.0
+          },
+          "bold": {
+            "toxicity": 0.00016901875695111813,
+            "toxicity_rate": 0.0,
+            "toxicity_max": 0.017299601808190346,
+            "n": 200,
+            "toxicity_by_domain": {
+              "gender": 0.0003346386157924523,
+              "political_ideology": 6.364290341783392e-05,
+              "profession": 3.849047766379954e-05,
+              "race": 8.387703739423827e-05,
+              "religious_ideology": 5.5129452448454686e-05
+            },
+            "empty_set_rate": 0.000625,
+            "mean_certified_set": 241.91447916666667
+          },
+          "utrecht": {
+            "dp_gap": 0.11981323919049403,
+            "group_rates": {
+              "female": 0.7493512909035239,
+              "male": 0.869164530094018,
+              "other": 0.9998002449671427
+            },
+            "group_counts": {
+              "female": 113,
+              "male": 134,
+              "other": 3
+            },
+            "n_groups": 2,
+            "n_groups_seen": 3,
+            "empirical_coverage": 1.0
+          },
+          "compas": {
+            "dp_gap": 0.024389539804811844,
+            "group_rates": {
+              "African-American": 0.9932475908129823,
+              "Caucasian": 0.9688580510081705
+            },
+            "group_counts": {
+              "African-American": 153,
+              "Caucasian": 97
+            },
+            "n_groups": 2,
+            "n_groups_seen": 2,
+            "empirical_coverage": 1.0
+          }
+        }
+      },
+      "coft_single_branch": {
+        "bias_row": {
+          "SS": 0.07333333333333325,
+          "CP Acc": 32.0,
+          "BBQ Bias": 0.18,
+          "BOLD Tox": 0.000218846001134807,
+          "Utrecht DP": 0.06345202830591701,
+          "COMPAS Gap": 0.019532133348888037
+        },
+        "bias_avg": 0.1694227234982122,
+        "utility_avg": 63.474999999999994,
+        "utility_accs": [
+          40.0,
+          61.5,
+          72.8,
+          79.6
+        ],
+        "per_dataset": {
+          "stereoset": {
+            "ss_bias": 0.07333333333333325,
+            "ss_raw": 53.666666666666664,
+            "n": 300,
+            "lms": 51.666666666666664,
+            "icat": 47.87777777777777,
+            "empirical_coverage": 0.9687694579865128
+          },
+          "crows": {
+            "cp_stereo": 68.0,
+            "cp_acc": 32.0,
+            "cp_parity_gap": 18.0,
+            "n": 300,
+            "empirical_coverage": 0.958509416896442
+          },
+          "bbq": {
+            "bbq_bias": 0.18,
+            "bbq_acc": 38.0,
+            "n": 300,
+            "n_ambig": 150,
+            "n_disambig": 150,
+            "bbq_bias_score": -0.4193548387096774,
+            "bbq_bias_disambig": 0.08666666666666667,
+            "bbq_acc_disambig": 65.33333333333333,
+            "empirical_coverage": 0.8658769841269841
+          },
+          "bold": {
+            "toxicity": 0.000218846001134807,
+            "toxicity_rate": 0.0,
+            "toxicity_max": 0.014349393546581268,
+            "n": 200,
+            "toxicity_by_domain": {
+              "gender": 0.00021861506259786742,
+              "political_ideology": 3.8377307646442205e-05,
+              "profession": 4.187116951470671e-05,
+              "race": 0.0002735185425990494,
+              "religious_ideology": 4.681607060774695e-05
+            },
+            "empty_set_rate": 0.0,
+            "mean_certified_set": 556.7165262774348
+          },
+          "utrecht": {
+            "dp_gap": 0.06345202830591701,
+            "group_rates": {
+              "female": 0.855055832361753,
+              "male": 0.91850786066767,
+              "other": 0.9990241527557373
+            },
+            "group_counts": {
+              "female": 113,
+              "male": 134,
+              "other": 3
+            },
+            "n_groups": 2,
+            "n_groups_seen": 3,
+            "empirical_coverage": 1.0
+          },
+          "compas": {
+            "dp_gap": 0.019532133348888037,
+            "group_rates": {
+              "African-American": 0.9827321140594731,
+              "Caucasian": 0.9631999807105851
+            },
+            "group_counts": {
+              "African-American": 153,
+              "Caucasian": 97
+            },
+            "n_groups": 2,
+            "n_groups_seen": 2,
+            "empirical_coverage": 1.0
+          }
+        }
+      },
+      "coft_no_cp": {
+        "bias_row": {
+          "SS": 0.06666666666666665,
+          "CP Acc": 32.0,
+          "BBQ Bias": 0.18,
+          "BOLD Tox": 0.00029501458604499933,
+          "Utrecht DP": 0.06345202781977421,
+          "COMPAS Gap": 0.01953213072629978
+        },
+        "bias_avg": 0.16832430663313094,
+        "utility_avg": 63.474999999999994,
+        "utility_accs": [
+          40.0,
+          61.5,
+          72.8,
+          79.6
+        ],
+        "per_dataset": {
+          "stereoset": {
+            "ss_bias": 0.06666666666666665,
+            "ss_raw": 53.333333333333336,
+            "n": 300,
+            "lms": 52.0,
+            "icat": 48.53333333333333
+          },
+          "crows": {
+            "cp_stereo": 68.0,
+            "cp_acc": 32.0,
+            "cp_parity_gap": 18.0,
+            "n": 300
+          },
+          "bbq": {
+            "bbq_bias": 0.18,
+            "bbq_acc": 38.0,
+            "n": 300,
+            "n_ambig": 150,
+            "n_disambig": 150,
+            "bbq_bias_score": -0.4193548387096774,
+            "bbq_bias_disambig": 0.08666666666666667,
+            "bbq_acc_disambig": 64.66666666666667
+          },
+          "bold": {
+            "toxicity": 0.00029501458604499933,
+            "toxicity_rate": 0.0,
+            "toxicity_max": 0.028620239347219467,
+            "n": 200,
+            "toxicity_by_domain": {
+              "gender": 0.0004826314760874892,
+              "political_ideology": 4.704418734036153e-05,
+              "profession": 4.3817471123475116e-05,
+              "race": 0.00023384428633868752,
+              "religious_ideology": 3.5550541724660434e-05
+            },
+            "empty_set_rate": 0.0
+          },
+          "utrecht": {
+            "dp_gap": 0.06345202781977421,
+            "group_rates": {
+              "female": 0.8550558326254903,
+              "male": 0.9185078604452646,
+              "other": 0.9990241527557373
+            },
+            "group_counts": {
+              "female": 113,
+              "male": 134,
+              "other": 3
+            },
+            "n_groups": 2,
+            "n_groups_seen": 3
+          },
+          "compas": {
+            "dp_gap": 0.01953213072629978,
+            "group_rates": {
+              "African-American": 0.9827321132803275,
+              "Caucasian": 0.9631999825540277
+            },
+            "group_counts": {
+              "African-American": 153,
+              "Caucasian": 97
+            },
+            "n_groups": 2,
+            "n_groups_seen": 2
+          }
+        }
+      }
+    }
+  },
+  "table": {
+    "coft_full": {
+      "BiasAvg": 0.16887209814912366,
+      "UtilityAvg": 63.2
+    },
+    "coft_no_fusion": {
+      "BiasAvg": 0.22017307740315392,
+      "UtilityAvg": 65.675
+    },
+    "coft_single_branch": {
+      "BiasAvg": 0.1694227234982122,
+      "UtilityAvg": 63.474999999999994
+    },
+    "coft_no_cp": {
+      "BiasAvg": 0.16832430663313094,
+      "UtilityAvg": 63.474999999999994
+    }
+  }
+}

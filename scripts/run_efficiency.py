@@ -70,13 +70,19 @@ def time_method(decoder, items, max_new_tokens: int, n_warmup: int, n_windows: i
     # EOS stopping is disabled during timing: otherwise a method that happens to
     # emit EOS earlier runs fewer decode steps, and tokens/second stops being a
     # like-for-like measurement (prefill is then amortised over fewer tokens).
-    for _ in range(n_warmup):
+    #
+    # Warm-up runs the *full* workload shape.  A short warm-up leaves CUDA
+    # autotuning and the GPU clock unsettled, so the first measured window comes
+    # in 2-3x slow; averaging that in shifted each method by a different amount
+    # and produced negative overheads -- COFT appearing to run faster than
+    # vanilla despite evaluating two branches.
+    for _ in range(max(1, n_warmup)):
         decoder.generate(
-            prompts, terms, max_new_tokens=min(16, max_new_tokens), greedy=True, stop_on_eos=False
+            prompts, terms, max_new_tokens=max_new_tokens, greedy=True, stop_on_eos=False
         )
 
     if torch.cuda.is_available():
-        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
         torch.cuda.reset_peak_memory_stats()
 
     rates: List[float] = []
@@ -90,9 +96,14 @@ def time_method(decoder, items, max_new_tokens: int, n_warmup: int, n_windows: i
         rates.append(res.tokens_per_second)
 
     peak = torch.cuda.max_memory_allocated() / (1024**3) if torch.cuda.is_available() else float("nan")
+    # Median is the headline: it is insensitive to a single stalled window
+    # (background load, clock throttling) in a way the mean is not.
+    spread = (max(rates) - min(rates)) / statistics.median(rates) if rates else float("nan")
     return {
-        "tokens_per_sec": statistics.mean(rates),
+        "tokens_per_sec": statistics.median(rates),
+        "tokens_per_sec_mean": statistics.mean(rates),
         "tokens_per_sec_std": statistics.stdev(rates) if len(rates) > 1 else 0.0,
+        "window_spread": spread,
         "peak_mem_gb": peak,
         "windows": rates,
     }

@@ -1,0 +1,669 @@
+{
+  "model": {
+    "key": "llama2-13b",
+    "label": "LLaMA-2-13B",
+    "model_id": "NousResearch/Llama-2-13b-hf",
+    "tokenizer_id": "unsloth/llama-2-13b",
+    "dtype": "bfloat16",
+    "device_map": {
+      "": 0
+    }
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "columns": [
+    "GSM8K",
+    "StrategyQA",
+    "ARC-easy",
+    "PIQA",
+    "PPL",
+    "MAUVE"
+  ],
+  "per_seed": {
+    "0": {
+      "vanilla": {
+        "row": {
+          "GSM8K": 28.0,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.5,
+          "PIQA": 80.25,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.03848276181511098
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 28.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.5,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 80.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03848276181511098,
+            "n": 150
+          }
+        }
+      },
+      "sdd": {
+        "row": {
+          "GSM8K": 25.333333333333332,
+          "StrategyQA": 53.5,
+          "ARC-easy": 58.75,
+          "PIQA": 77.25,
+          "PPL": 5.236942520676321,
+          "MAUVE": 0.02960753912871665
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 25.333333333333332,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 53.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 58.75,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 77.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 5.236942520676321,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.02960753912871665,
+            "n": 150
+          }
+        }
+      },
+      "dexperts": {
+        "row": {
+          "GSM8K": 30.0,
+          "StrategyQA": 61.5,
+          "ARC-easy": 70.0,
+          "PIQA": 78.75,
+          "PPL": 4.3356647810864875,
+          "MAUVE": 0.03547756269726472
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 30.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 61.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 78.75,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.3356647810864875,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03547756269726472,
+            "n": 150
+          }
+        }
+      },
+      "dtcd": {
+        "row": {
+          "GSM8K": 27.333333333333332,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.25,
+          "PIQA": 79.5,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.04423423729025773
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 27.333333333333332,
+            "n": 150,
+            "empty_set_rate": 2.604166666666667e-05,
+            "mean_certified_set": 45.84551466557018
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.25,
+            "n": 400,
+            "empirical_coverage": 0.9899623852424051
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9838401409351256
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.04423423729025773,
+            "n": 150
+          }
+        }
+      },
+      "coft": {
+        "row": {
+          "GSM8K": 20.0,
+          "StrategyQA": 59.0,
+          "ARC-easy": 70.0,
+          "PIQA": 79.5,
+          "PPL": 4.3301660948376375,
+          "MAUVE": 0.03054488316641995
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 20.0,
+            "n": 150,
+            "empty_set_rate": 0.0,
+            "mean_certified_set": 36.70732250548245
+          },
+          "strategyqa": {
+            "acc": 59.0,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400,
+            "empirical_coverage": 0.9927649572179094
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9888634897872534
+          },
+          "ppl": {
+            "ppl": 4.3301660948376375,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03054488316641995,
+            "n": 150
+          }
+        }
+      }
+    },
+    "1": {
+      "vanilla": {
+        "row": {
+          "GSM8K": 28.0,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.5,
+          "PIQA": 80.25,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.031997350064898206
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 28.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.5,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 80.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.031997350064898206,
+            "n": 150
+          }
+        }
+      },
+      "sdd": {
+        "row": {
+          "GSM8K": 25.333333333333332,
+          "StrategyQA": 53.5,
+          "ARC-easy": 58.75,
+          "PIQA": 77.25,
+          "PPL": 5.236942520676321,
+          "MAUVE": 0.04198717943235725
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 25.333333333333332,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 53.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 58.75,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 77.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 5.236942520676321,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.04198717943235725,
+            "n": 150
+          }
+        }
+      },
+      "dexperts": {
+        "row": {
+          "GSM8K": 30.0,
+          "StrategyQA": 61.5,
+          "ARC-easy": 70.0,
+          "PIQA": 78.75,
+          "PPL": 4.3356647810864875,
+          "MAUVE": 0.03188205413925868
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 30.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 61.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 78.75,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.3356647810864875,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03188205413925868,
+            "n": 150
+          }
+        }
+      },
+      "dtcd": {
+        "row": {
+          "GSM8K": 27.333333333333332,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.25,
+          "PIQA": 79.5,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.01864280167785586
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 27.333333333333332,
+            "n": 150,
+            "empty_set_rate": 2.604166666666667e-05,
+            "mean_certified_set": 45.84551466557018
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.25,
+            "n": 400,
+            "empirical_coverage": 0.9899623852424051
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9838401409351256
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.01864280167785586,
+            "n": 150
+          }
+        }
+      },
+      "coft": {
+        "row": {
+          "GSM8K": 20.0,
+          "StrategyQA": 59.0,
+          "ARC-easy": 70.0,
+          "PIQA": 79.5,
+          "PPL": 4.3301660948376375,
+          "MAUVE": 0.03279250217168601
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 20.0,
+            "n": 150,
+            "empty_set_rate": 0.0,
+            "mean_certified_set": 36.70732250548245
+          },
+          "strategyqa": {
+            "acc": 59.0,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400,
+            "empirical_coverage": 0.9927649572179094
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9888634897872534
+          },
+          "ppl": {
+            "ppl": 4.3301660948376375,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03279250217168601,
+            "n": 150
+          }
+        }
+      }
+    },
+    "2": {
+      "vanilla": {
+        "row": {
+          "GSM8K": 28.0,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.5,
+          "PIQA": 80.25,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.03799526481299954
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 28.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.5,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 80.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03799526481299954,
+            "n": 150
+          }
+        }
+      },
+      "sdd": {
+        "row": {
+          "GSM8K": 25.333333333333332,
+          "StrategyQA": 53.5,
+          "ARC-easy": 58.75,
+          "PIQA": 77.25,
+          "PPL": 5.236942520676321,
+          "MAUVE": 0.03862076447614203
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 25.333333333333332,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 53.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 58.75,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 77.25,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 5.236942520676321,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.03862076447614203,
+            "n": 150
+          }
+        }
+      },
+      "dexperts": {
+        "row": {
+          "GSM8K": 30.0,
+          "StrategyQA": 61.5,
+          "ARC-easy": 70.0,
+          "PIQA": 78.75,
+          "PPL": 4.3356647810864875,
+          "MAUVE": 0.02177493791890918
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 30.0,
+            "n": 150,
+            "empty_set_rate": 0.0
+          },
+          "strategyqa": {
+            "acc": 61.5,
+            "n": 400
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400
+          },
+          "piqa": {
+            "acc": 78.75,
+            "n": 400
+          },
+          "ppl": {
+            "ppl": 4.3356647810864875,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.02177493791890918,
+            "n": 150
+          }
+        }
+      },
+      "dtcd": {
+        "row": {
+          "GSM8K": 27.333333333333332,
+          "StrategyQA": 62.25,
+          "ARC-easy": 70.25,
+          "PIQA": 79.5,
+          "PPL": 4.330165975643849,
+          "MAUVE": 0.039761723430786
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 27.333333333333332,
+            "n": 150,
+            "empty_set_rate": 2.604166666666667e-05,
+            "mean_certified_set": 45.84551466557018
+          },
+          "strategyqa": {
+            "acc": 62.25,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.25,
+            "n": 400,
+            "empirical_coverage": 0.9899623852424051
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9838401409351256
+          },
+          "ppl": {
+            "ppl": 4.330165975643849,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.039761723430786,
+            "n": 150
+          }
+        }
+      },
+      "coft": {
+        "row": {
+          "GSM8K": 20.0,
+          "StrategyQA": 59.0,
+          "ARC-easy": 70.0,
+          "PIQA": 79.5,
+          "PPL": 4.3301660948376375,
+          "MAUVE": 0.042598503724920016
+        },
+        "detail": {
+          "gsm8k": {
+            "acc": 20.0,
+            "n": 150,
+            "empty_set_rate": 0.0,
+            "mean_certified_set": 36.70732250548245
+          },
+          "strategyqa": {
+            "acc": 59.0,
+            "n": 400,
+            "empirical_coverage": 1.0
+          },
+          "arc_easy": {
+            "acc": 70.0,
+            "n": 400,
+            "empirical_coverage": 0.9927649572179094
+          },
+          "piqa": {
+            "acc": 79.5,
+            "n": 400,
+            "empirical_coverage": 0.9888634897872534
+          },
+          "ppl": {
+            "ppl": 4.3301660948376375,
+            "n_tokens": 19956,
+            "n_docs": 40
+          },
+          "mauve": {
+            "mauve": 0.042598503724920016,
+            "n": 150
+          }
+        }
+      }
+    }
+  },
+  "table": {
+    "vanilla": {
+      "GSM8K": 28.0,
+      "StrategyQA": 62.25,
+      "ARC-easy": 70.5,
+      "PIQA": 80.25,
+      "PPL": 4.330165975643849,
+      "MAUVE": 0.036158458897669575
+    },
+    "sdd": {
+      "GSM8K": 25.333333333333332,
+      "StrategyQA": 53.5,
+      "ARC-easy": 58.75,
+      "PIQA": 77.25,
+      "PPL": 5.236942520676321,
+      "MAUVE": 0.03673849434573864
+    },
+    "dexperts": {
+      "GSM8K": 30.0,
+      "StrategyQA": 61.5,
+      "ARC-easy": 70.0,
+      "PIQA": 78.75,
+      "PPL": 4.3356647810864875,
+      "MAUVE": 0.02971151825181086
+    },
+    "dtcd": {
+      "GSM8K": 27.333333333333332,
+      "StrategyQA": 62.25,
+      "ARC-easy": 70.25,
+      "PIQA": 79.5,
+      "PPL": 4.330165975643849,
+      "MAUVE": 0.034212920799633194
+    },
+    "coft": {
+      "GSM8K": 20.0,
+      "StrategyQA": 59.0,
+      "ARC-easy": 70.0,
+      "PIQA": 79.5,
+      "PPL": 4.3301660948376375,
+      "MAUVE": 0.03531196302100866
+    }
+  }
+}
