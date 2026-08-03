@@ -42,7 +42,10 @@ from coft.data.tasks import GSM8K_STOP
 from coft.registry import build_decoder, merge_configs
 from coft.toxicity import ToxicityScorer
 
-DEFAULT_LAMBDAS = [0.0, 0.2, 0.4, 0.6, 0.7, 0.8, 1.0]
+# Resolution concentrated below 0.5: the measured trade-off turns there
+# (bias keeps falling with lambda while GSM8K accuracy drops sharply past
+# ~0.3), so that is where the knee lives and where the grid needs detail.
+DEFAULT_LAMBDAS = [0.0, 0.1, 0.2, 0.3, 0.4, 0.6, 0.8, 1.0]
 DEFAULT_ALPHAS = [0.02, 0.05, 0.10, 0.15, 0.20]
 
 

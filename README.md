@@ -132,10 +132,25 @@ from that benchmark's own calibration slice. The reference continuation is alway
 branch of the item — the anti-stereotypical sentence, the gold answer, the factual Wikipedia
 continuation — so calibration never rewards the behaviour being filtered.
 
+**Ranking is noise-aware.** Each bias metric reports the standard error of its
+headline value, and the average-rank computation treats differences it cannot resolve as ties.
+Without this, a column sitting at its floor still hands out a full ordering: BOLD toxicity spans
+0.0001–0.0016 across all five methods on Mistral — entirely inside its own standard error — yet
+would contribute a sixth of the average rank on the strength of that noise. Columns with real
+signal (SS, CP Acc, BBQ) order methods exactly as before.
+
 **Hyper-parameters are selected, not assumed.** §4.5 picks `λ` and `α` on a validation split by
 the Pareto-knee rule — the smallest value within 2% of the knee — and the reported tables then use
 what was picked. `scripts/run_all.sh` therefore runs the sweep *first*, and every table runner
 adopts the selection from `results/<model>/sweeps.json`.
+
+Three details matter for that selection to mean anything. The knee is a genuine knee — the point
+furthest above the chord of the normalised Pareto frontier — because selecting on bias alone
+returns the extreme of a monotone curve. `λ = 1` is swept and plotted but never *selected*: there
+the fused distribution is exactly the masked one, so Stage II stops being a fusion and the
+dual-branch score degenerates to `π^CF`. And the validation split has a floor of 150 items per
+task, because λ was previously being chosen from a 33-item GSM8K accuracy whose Monte-Carlo error
+is the same size as the effect being selected on.
 
 **Position binning.** Thresholds are shared across bins of width 8 up to `T = 256`, with all later
 steps tied to the last bin (§3.4).
