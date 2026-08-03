@@ -132,6 +132,11 @@ from that benchmark's own calibration slice. The reference continuation is alway
 branch of the item — the anti-stereotypical sentence, the gold answer, the factual Wikipedia
 continuation — so calibration never rewards the behaviour being filtered.
 
+**Hyper-parameters are selected, not assumed.** §4.5 picks `λ` and `α` on a validation split by
+the Pareto-knee rule — the smallest value within 2% of the knee — and the reported tables then use
+what was picked. `scripts/run_all.sh` therefore runs the sweep *first*, and every table runner
+adopts the selection from `results/<model>/sweeps.json`.
+
 **Position binning.** Thresholds are shared across bins of width 8 up to `T = 256`, with all later
 steps tied to the last bin (§3.4).
 
@@ -155,10 +160,10 @@ here are pinned down in [`coft/metrics.py`](coft/metrics.py):
 | Column | Definition |
 |---|---|
 | **SS** ↓ | `2 · max(0, p_stereo − 0.5)`, where `p_stereo` is the fraction of StereoSet triples whose stereotypical sentence outscores the anti-stereotypical one. `0` = parity. The classical `ss`, `lms` and `icat` are reported alongside. |
-| **CP Acc** ↑ | `100 − CP-STEREO`, exactly as in §4.1, where `CP-STEREO` is the standard CrowS-Pairs metric. `cp_parity_gap = \|CP-STEREO − 50\|` is also recorded, since that is the quantity that is zero for an unbiased model. |
-| **BBQ Bias** ↓ | Fraction of items where the model picks the stereotype-aligned identity answer *and* that answer is wrong. Parrish et al.'s `2·(n_biased/n_non_unknown) − 1` is reported as `bbq_bias_score`. |
+| **CP Acc** ↑ | `100 − CP-STEREO`, exactly as in §4.1, where `CP-STEREO` is the standard CrowS-Pairs metric. `cp_parity_gap = \|CP-STEREO − 50\|` is also recorded, since that is the quantity that is zero for an unbiased model. Exact ties count as 0.5: as `λ → 1` both branches mask to the same prompt and the two scores coincide, and a strict `>` would score every such abstention as an anti-stereotype win. |
+| **BBQ Bias** ↓ | Fraction of items where the model picks the stereotype-aligned identity answer *and* that answer is wrong, computed on **ambiguous** contexts. On a *disambiguated* item the protected attribute is the answer-relevant evidence, so masking it destroys the information needed to answer — accuracy collapses and the scattered errors register as "bias" while actually measuring semantic drift (App. D.2). Ambiguous contexts have no such evidence (gold is always UNKNOWN), so the metric isolates the model's prior. Disambiguated accuracy is reported as `bbq_acc_disambig` so the cost of masking evidence stays visible. |
 | **BOLD Tox** ↓ | Mean toxicity of generated continuations under `s-nlp/roberta_toxicity_classifier`. |
-| **Utrecht DP / COMPAS Gap** ↓ | Maximum pairwise demographic-parity gap of `P(Yes)` across protected groups, where `P(Yes)` is the two-way softmax of the decoder's log-likelihoods for the `Yes` / `No` continuations. |
+| **Utrecht DP / COMPAS Gap** ↓ | Maximum pairwise demographic-parity gap of `P(Yes)` across protected groups, where `P(Yes)` is the two-way softmax of the decoder's log-likelihoods for the `Yes` / `No` continuations. Groups with fewer than 20 items are excluded from the max (and still reported): a max-over-groups statistic is otherwise set by sampling noise in a rare category. |
 
 **Likelihood under a certified policy.** Soundness (Prop. 2) means COFT never *emits* a token
 outside `C_t`, so the policy assigns it zero probability. Likelihood-based metrics need a finite,
@@ -201,12 +206,13 @@ that the environment forced. None of it is hidden in code.
    the same frozen model; real expert checkpoints are supported via config. Its `strength` follows
    App. C.3 — the strongest steering whose accuracy cost stays within ~5% of vanilla.
 
-5. **CrowS-Pairs limits COFT structurally.** Its minimal pairs differ *in* the protected term, so
-   after splitting at the shared prefix the sensitive span usually lands in the continuation rather
-   than the prompt. Only ~37% of items carry a maskable span in the conditioning context (vs.
-   96–100% on the other five benchmarks), so Stage I has little to act on and the CrowS gain is
-   correspondingly small. Enabling the NER route lifts that from ~30% to ~37%. This is a real
-   property of applying prompt-masking to CrowS, not an implementation shortfall.
+5. **CrowS-Pairs conditions on the modified span.** Its minimal pairs differ *in* the protected
+   term, so the arrangement matters: each sentence is split into `shared prefix | modified span |
+   shared suffix`, the prompt is `prefix + modified span` and the scored continuation is the shared
+   suffix. This is the methodology of Nangia et al. (score the unmodified tokens given the modified
+   ones) and it is the only arrangement under which COFT can act on CrowS at all — both branches
+   receive the continuation verbatim (Sec. 3.1), so a protected span sitting there would be
+   invisible to the masked probe. Maskable items: **86%** (37% under a naive shared-prefix split).
 
 6. **Seeds.** Tables 1–2 average three seeds. The ablation and the sweeps use one seed because
    every quantity they report is a teacher-forced likelihood or a greedy decode, both deterministic
