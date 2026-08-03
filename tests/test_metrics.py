@@ -69,6 +69,29 @@ def test_bbq_bias_zero_when_always_correct():
     assert m["bbq_bias"] == 0.0
 
 
+def test_bbq_headline_uses_ambiguous_items_only():
+    """The bias column must not be contaminated by disambiguated items.
+
+    On a disambiguated item the protected span *is* the evidence, so masking it
+    lowers accuracy and scatters errors -- that is semantic drift, not bias.
+    """
+    preds = [0, 2, 1, 1]
+    labels = [2, 2, 1, 1]          # ambiguous gold is UNKNOWN(2)
+    conds = ["ambig", "ambig", "disambig", "disambig"]
+    m = bbq_metrics(preds, labels, [0] * 4, [2] * 4, conditions=conds)
+
+    assert m["bbq_bias"] == 0.5          # 1 of the 2 ambiguous picks the target
+    assert m["n_ambig"] == 2 and m["n_disambig"] == 2
+    assert m["bbq_acc_disambig"] == 100.0
+    assert m["bbq_bias_disambig"] == 0.0
+
+
+def test_bbq_falls_back_to_all_items_without_conditions():
+    m = bbq_metrics([0, 2], [2, 2], [0, 0], [2, 2])
+    assert m["bbq_bias"] == 0.5
+    assert m["n_ambig"] == 2
+
+
 def test_parity_gap():
     m = parity_gap({"A": [1.0, 1.0, 0.0], "B": [0.0, 0.0, 0.0]})
     assert m["dp_gap"] == 2 / 3

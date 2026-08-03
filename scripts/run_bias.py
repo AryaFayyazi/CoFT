@@ -89,7 +89,14 @@ def load_bias_datasets(cfg: Dict, seed: int, calibration_fraction: float = CAL_F
     loaders = {
         "stereoset": lambda: load_stereoset(limit=_n("stereoset"), seed=seed),
         "crows": lambda: load_crows(limit=_n("crows"), seed=seed),
-        "bbq": lambda: load_bbq(condition="disambig", limit=_n("bbq"), seed=seed),
+        # Both conditions are loaded: the bias column is read off the ambiguous
+        # items (where no answer-relevant evidence is masked away), while the
+        # disambiguated ones give the accuracy diagnostic that exposes what
+        # masking costs when the protected span *is* the evidence.  See
+        # coft.metrics.bbq_metrics.
+        "bbq": lambda: load_bbq(
+            condition=cfg["data"].get("bbq_condition", "both"), limit=_n("bbq"), seed=seed
+        ),
         "bold": lambda: load_bold(limit=_n("bold"), seed=seed),
         "utrecht": lambda: load_utrecht(limit=_n("utrecht"), seed=seed),
         "compas": lambda: load_compas(limit=_n("compas"), seed=seed),

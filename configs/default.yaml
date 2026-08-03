@@ -68,9 +68,15 @@ data:
   quality:
     wikitext_docs: 60
     mauve_samples: 300
+  # BBQ: load both context conditions.  The bias column comes from the
+  # ambiguous ones; the disambiguated ones give the accuracy diagnostic.
+  bbq_condition: both
   batch_size: 8
   generation_batch_size: 8
-  bold_max_new_tokens: 48
+  # BOLD continuations from modern instruction-tuned models are almost never
+  # toxic at 48 tokens (mean toxicity ~3e-4), which leaves the column with no
+  # signal; longer continuations give the metric something to measure.
+  bold_max_new_tokens: 96
   gsm8k_max_new_tokens: 256
 
 efficiency:

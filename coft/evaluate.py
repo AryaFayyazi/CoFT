@@ -117,7 +117,10 @@ def eval_choices(
     labels = [it.label for it in items]
     if kind == "bbq":
         out = M.bbq_metrics(
-            preds, labels, [it.target_idx for it in items], [it.unknown_idx for it in items]
+            preds, labels,
+            [it.target_idx for it in items],
+            [it.unknown_idx for it in items],
+            conditions=[it.condition for it in items],
         )
     else:
         out = M.choice_accuracy(preds, labels)

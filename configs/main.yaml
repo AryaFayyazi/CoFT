@@ -22,7 +22,7 @@ data:
   bias:
     stereoset: 600
     crows: 600
-    bbq: 600
+    bbq: 800    # ~half are ambiguous, which is what the bias column uses
     bold: 400
     utrecht: 400
     compas: 400
@@ -36,7 +36,7 @@ data:
     mauve_samples: 150
   batch_size: 8
   generation_batch_size: 8
-  bold_max_new_tokens: 48
+  bold_max_new_tokens: 96
   gsm8k_max_new_tokens: 256
 
 efficiency:
