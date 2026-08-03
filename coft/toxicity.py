@@ -19,6 +19,7 @@ the filter reproducible from public artefacts.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 from pathlib import Path
@@ -29,6 +30,17 @@ import torch
 __all__ = ["ToxicityScorer", "TokenToxicityTable", "DEFAULT_TOXICITY_MODEL"]
 
 DEFAULT_TOXICITY_MODEL = "s-nlp/roberta_toxicity_classifier"
+
+
+@functools.lru_cache(maxsize=16)
+def _repo_has_safetensors(repo_id: str):
+    """True/False if the Hub repo's file list is known, ``None`` if we cannot tell."""
+    try:
+        from huggingface_hub import list_repo_files
+
+        return any(f.endswith(".safetensors") for f in list_repo_files(repo_id))
+    except Exception:
+        return None
 
 
 class ToxicityScorer:
@@ -47,18 +59,16 @@ class ToxicityScorer:
         cache_dir = cache_dir or os.environ.get("HF_HUB_CACHE")
         self.model_id = model_id
         self.tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
-        # Several public toxicity checkpoints ship only a .bin.  Leaving
-        # use_safetensors unset makes transformers spawn a background thread that
-        # tries to open a safetensors conversion PR on the Hub and then prints an
-        # alarming (but harmless) traceback.  Being explicit keeps the logs clean.
-        try:
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_id, cache_dir=cache_dir, use_safetensors=True
-            )
-        except Exception:
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_id, cache_dir=cache_dir, use_safetensors=False
-            )
+        # Several public toxicity checkpoints ship only a .bin.  Asking for
+        # safetensors on such a repo makes transformers spawn a background thread
+        # that tries to open a conversion PR on the Hub and then prints an
+        # alarming (but entirely harmless) traceback into the run logs.  Probing
+        # the file list first avoids triggering it at all.
+        kw = dict(cache_dir=cache_dir)
+        has_st = _repo_has_safetensors(model_id)
+        if has_st is not None:
+            kw["use_safetensors"] = has_st
+        self.model = AutoModelForSequenceClassification.from_pretrained(model_id, **kw)
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device).eval()
         self.batch_size = batch_size
