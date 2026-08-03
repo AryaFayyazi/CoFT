@@ -67,6 +67,17 @@ COLUMNS = [
     ("Utrecht DP", "dp_gap", False),
     ("COMPAS Gap", "dp_gap", False),
 ]
+
+#: Standard-error key for each column, used to decide whether two methods are
+#: separable on it at all (see coft.metrics.average_rank).
+COLUMN_SE = {
+    "SS": "ss_bias_se",
+    "CP Acc": "cp_acc_se",
+    "BBQ Bias": "bbq_bias_se",
+    "BOLD Tox": "toxicity_se",
+    "Utrecht DP": "dp_gap_se",
+    "COMPAS Gap": "dp_gap_se",
+}
 DATASETS = ["stereoset", "crows", "bbq", "bold", "utrecht", "compas"]
 CAL_FRACTION = 0.15
 
@@ -191,6 +202,18 @@ def flatten(per_dataset: Dict[str, Dict]) -> Dict[str, float]:
     return row
 
 
+def flatten_se(per_dataset: Dict[str, Dict]) -> Dict[str, float]:
+    """Per-column standard error, matching the layout of :func:`flatten`."""
+    out: Dict[str, float] = {}
+    for (col, _key, _), ds in zip(COLUMNS, DATASETS):
+        se_key = COLUMN_SE.get(col)
+        if ds in per_dataset and se_key and se_key in per_dataset[ds]:
+            v = per_dataset[ds][se_key]
+            if v == v:
+                out[col] = float(v)
+    return out
+
+
 def prepare_thresholds(lm, cfg, out_dir, cal_data, specs, masker, force, progress) -> Dict:
     """Calibrate ``tau_t`` per (dataset, spec).  ``specs`` is a list of ``(key, score, lam)``."""
     out: Dict[str, Dict[str, object]] = {}
@@ -288,6 +311,7 @@ def main() -> int:
             payload["per_seed"][str(seed)][method] = {
                 "per_dataset": per_ds,
                 "row": flatten(per_ds),
+                "row_se": flatten_se(per_ds),
             }
 
     # mean over seeds; average rank is recomputed per seed then averaged (App. C.2)
@@ -300,10 +324,21 @@ def main() -> int:
         mean_rows[method] = {c: sum(v) / len(v) for c, v in acc.items()}
 
     rank_cols = [(c, hb) for (c, _, hb) in COLUMNS if any(c in r for r in mean_rows.values())]
+    # A column can only order methods it can separate.  The tolerance is the
+    # largest standard error any method reports on that column, so a column
+    # sitting at its floor (BOLD toxicity here) yields ties rather than a
+    # spurious ordering.
+    tolerances: Dict[str, float] = {}
+    for seed in seeds:
+        for m in args.methods:
+            for col, se in payload["per_seed"][str(seed)][m].get("row_se", {}).items():
+                tolerances[col] = max(tolerances.get(col, 0.0), se)
+    payload["rank_tolerances"] = tolerances
+
     per_seed_ranks: Dict[str, List[float]] = {m: [] for m in args.methods}
     for seed in seeds:
         rows = {m: payload["per_seed"][str(seed)][m]["row"] for m in args.methods}
-        for m, v in average_rank(rows, rank_cols).items():
+        for m, v in average_rank(rows, rank_cols, tolerances).items():
             per_seed_ranks[m].append(v)
     for m in args.methods:
         vals = [v for v in per_seed_ranks[m] if v == v]

@@ -178,6 +178,37 @@ def test_perplexity():
     assert math.isnan(perplexity_from_logprobs(-1.0, 0))
 
 
+def test_floored_column_produces_ties_not_a_spurious_order():
+    """A column that cannot separate methods must not order them.
+
+    BOLD toxicity spans ~0.0001-0.0016 across methods on these models, entirely
+    inside its own standard error, yet without a tolerance it would hand out a
+    full 1/2/3 ordering and contribute a sixth of the average rank on noise.
+    """
+    per_method = {"a": {"tox": 0.0001}, "b": {"tox": 0.0016}, "c": {"tox": 0.0013}}
+    naive = average_rank(per_method, [("tox", False)])
+    assert sorted(naive.values()) == [1.0, 2.0, 3.0]        # ordered by noise
+
+    aware = average_rank(per_method, [("tox", False)], {"tox": 0.0022})
+    assert set(aware.values()) == {2.0}                      # all tied
+
+
+def test_tolerance_still_separates_a_real_effect():
+    per_method = {"a": {"ss": 0.08}, "b": {"ss": 0.17}}
+    r = average_rank(per_method, [("ss", False)], {"ss": 0.04})
+    assert r["a"] == 1.0 and r["b"] == 2.0
+
+
+def test_metrics_report_standard_errors():
+    ss = stereoset_metrics([1.0] * 350 + [0.0] * 250, [0.0] * 350 + [1.0] * 250)
+    assert ss["ss_bias_se"] > 0
+    cp = crows_metrics([1.0] * 400 + [0.0] * 200, [0.0] * 400 + [1.0] * 200)
+    assert cp["cp_acc_se"] > 0
+    tox = toxicity_metrics([0.0] * 398 + [0.4, 0.2])
+    # the floor case: the standard error is comparable to the mean itself
+    assert tox["toxicity_se"] > 0.5 * tox["toxicity"]
+
+
 def test_average_rank_orders_and_handles_ties():
     per_method = {
         "best": {"bias": 0.1, "acc": 90.0},

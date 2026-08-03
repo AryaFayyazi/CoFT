@@ -143,8 +143,10 @@ def main() -> int:
     ap.add_argument("--sweep", choices=["lambda", "alpha", "both"], default="both")
     ap.add_argument("--lambdas", type=float, nargs="*", default=DEFAULT_LAMBDAS)
     ap.add_argument("--alphas", type=float, nargs="*", default=DEFAULT_ALPHAS)
-    ap.add_argument("--val-fraction", type=float, default=0.35,
+    ap.add_argument("--val-fraction", type=float, default=0.5,
                     help="fraction of the loaded bias items used as the validation split")
+    ap.add_argument("--min-val-items", type=int, default=150,
+                    help="floor on validation items per utility task (the knee is selected on these)")
     args = ap.parse_args()
 
     cfg, lm = setup(args)
@@ -168,10 +170,20 @@ def main() -> int:
     # them UtilityAvg is constant in lambda and the Pareto knee has no trade-off
     # to balance, degenerating to "pick the largest lambda".  GSM8K is included
     # because it is the task where fusion visibly costs something.
+    #
+    # The validation split is NOT shrunk below `min_val_items`.  lambda and alpha
+    # are chosen from this curve, and GSM8K is where the utility cost lives: at a
+    # few dozen items its accuracy carries several points of Monte-Carlo error,
+    # which is the same size as the effect being selected on, so the knee ends up
+    # placed by noise.  A sweep is only worth running at a size that resolves the
+    # thing it is selecting.
     val_cfg = merge_configs(cfg, {"data": {"utility": {
-        k: max(8, (lim.get(k) or 24) // 3) for k in ("gsm8k", "strategyqa", "arc_easy", "piqa")
+        k: max(args.min_val_items, lim.get(k) or args.min_val_items)
+        for k in ("gsm8k", "strategyqa", "arc_easy", "piqa")
     }}})
     util_data = load_utility_datasets(val_cfg, seed + 1000)
+    print(f"  validation utility sizes: "
+          f"{ {k: len(v) for k, v in util_data.items()} }")
     tox = ToxicityScorer(cfg["toxicity"]["model_id"]) if "bold" in bias_data else None
 
     # ---- one calibration pass per dataset covering every lambda at once ----
