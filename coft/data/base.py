@@ -44,7 +44,23 @@ def raw_data_dir() -> Path:
 # --------------------------------------------------------------------------- #
 @dataclass
 class PairItem:
-    """A minimal pair: same context, a stereotypical and an anti-stereotypical continuation."""
+    """A minimal pair scored by likelihood under the evaluated decoder.
+
+    Two shapes are supported, because the two benchmarks are built differently:
+
+    *Shared context, differing continuations* (StereoSet).  ``context`` holds the
+    prompt -- which is where the protected target sits, so Stage I masks it --
+    and ``stereo`` / ``anti`` are the competing continuations.
+
+    *Differing contexts, shared continuation* (CrowS-Pairs).  The pair differs
+    only in the protected span itself, so the standard methodology of Nangia et
+    al. conditions on the **modified** tokens and scores the **unmodified**
+    remainder.  ``stereo_context`` / ``anti_context`` then carry the two
+    identity-bearing prompts and ``stereo == anti`` is the shared suffix.  This
+    is also the only arrangement under which COFT can act on CrowS at all: the
+    protected span has to be in the prompt for the masked branch to be blind to
+    it (both branches receive the continuation verbatim, Sec. 3.1).
+    """
 
     context: str
     stereo: str
@@ -52,7 +68,32 @@ class PairItem:
     terms: List[str] = field(default_factory=list)
     bias_type: str = "unknown"
     unrelated: Optional[str] = None
+    stereo_context: Optional[str] = None
+    anti_context: Optional[str] = None
+    stereo_terms: List[str] = field(default_factory=list)
+    anti_terms: List[str] = field(default_factory=list)
     meta: Dict = field(default_factory=dict)
+
+    @property
+    def ctx_stereo(self) -> str:
+        return self.context if self.stereo_context is None else self.stereo_context
+
+    @property
+    def ctx_anti(self) -> str:
+        return self.context if self.anti_context is None else self.anti_context
+
+    @property
+    def spans_stereo(self) -> List[str]:
+        return self.stereo_terms or self.terms
+
+    @property
+    def spans_anti(self) -> List[str]:
+        return self.anti_terms or self.terms
+
+    @property
+    def split_contexts(self) -> bool:
+        """True when the two branches have different prompts (CrowS-style)."""
+        return self.stereo_context is not None or self.anti_context is not None
 
 
 @dataclass
@@ -151,7 +192,8 @@ def calibration_triples(items: Sequence, max_words: int = 40) -> List[tuple]:
     out: List[tuple] = []
     for it in items:
         if isinstance(it, PairItem):
-            prompt, cont, terms = it.context, it.anti, it.terms
+            # calibrate on the anti-stereotypical branch, under its own prompt
+            prompt, cont, terms = it.ctx_anti, it.anti, it.spans_anti
         elif isinstance(it, ChoiceItem):
             prompt, cont, terms = it.prompt(), it.continuation(it.label), it.terms
         elif isinstance(it, DecisionItem):
@@ -178,6 +220,17 @@ def attach_terms(items: Sequence, lexicon=None, use_ner: bool = False) -> List:
 
     lexicon = lexicon or SensitiveLexicon()
     for it in items:
+        if isinstance(it, PairItem) and it.split_contexts:
+            # each branch carries its own prompt, so detect on each separately
+            it.stereo_terms = detect_spans(
+                it.ctx_stereo, lexicon, user_terms=tuple(it.spans_stereo), use_ner=use_ner
+            )
+            it.anti_terms = detect_spans(
+                it.ctx_anti, lexicon, user_terms=tuple(it.spans_anti), use_ner=use_ner
+            )
+            it.terms = it.stereo_terms
+            continue
+
         text = getattr(it, "prompt", None)
         if not isinstance(text, str):
             text = " ".join(

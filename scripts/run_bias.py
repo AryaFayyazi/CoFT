@@ -28,7 +28,16 @@ from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _common import base_parser, build_masker, get_thresholds, results_dir, save_json, set_seed, setup
+from _common import (
+    apply_selected_hyperparams,
+    base_parser,
+    build_masker,
+    get_thresholds,
+    results_dir,
+    save_json,
+    set_seed,
+    setup,
+)
 
 from coft import evaluate as E
 from coft.data.base import attach_terms, calibration_triples
@@ -206,6 +215,7 @@ def main() -> int:
 
     cfg, lm = setup(args)
     out_dir = results_dir(cfg, args)
+    cfg = apply_selected_hyperparams(cfg, out_dir)
     progress = not args.no_progress
     masker = build_masker(lm, cfg)
     seeds = cfg.get("seeds", [0])

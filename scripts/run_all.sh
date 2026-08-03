@@ -38,10 +38,15 @@ stage () {
   tail -n 12 "$LOG_DIR/$name.log"
 }
 
+# The sweeps run FIRST: Sec. 4.5 selects lambda and alpha on a validation split
+# by the Pareto-knee rule, and the reported tables then *use* the selected
+# values.  Every table runner picks them up from results/<model>/sweeps.json via
+# apply_selected_hyperparams(), so this ordering reproduces the paper's protocol
+# end to end rather than hard-coding lambda = 0.6.
+stage sweeps python3 scripts/run_sweep.py      "${COMMON[@]}" --override configs/ablation.yaml
 stage table1 python3 scripts/run_bias.py       "${COMMON[@]}" --override configs/main.yaml
 stage table2 python3 scripts/run_utility.py    "${COMMON[@]}" --override configs/main.yaml
 stage table3 python3 scripts/run_efficiency.py "${COMMON[@]}" --override configs/main.yaml
 stage table4 python3 scripts/run_ablation.py   "${COMMON[@]}" --override configs/ablation.yaml
-stage sweeps python3 scripts/run_sweep.py      "${COMMON[@]}" --override configs/ablation.yaml
 
 echo "[$(date +%H:%M:%S)] === $KEY :: done ==="

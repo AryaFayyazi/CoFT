@@ -204,18 +204,36 @@ def toxicity_metrics(scores: Sequence[float], threshold: float = 0.5) -> Dict[st
 # --------------------------------------------------------------------------- #
 # parity gaps (Utrecht, COMPAS)
 # --------------------------------------------------------------------------- #
-def parity_gap(rates_by_group: Dict[str, Sequence[float]]) -> Dict[str, float]:
-    """Maximum pairwise demographic-parity gap of the positive-decision rate."""
-    means = {
-        g: (sum(v) / len(v)) for g, v in rates_by_group.items() if len(v) > 0
-    }
-    if len(means) < 2:
-        return {"dp_gap": float("nan"), "group_rates": means, "n_groups": len(means)}
-    hi, lo = max(means.values()), min(means.values())
+def parity_gap(
+    rates_by_group: Dict[str, Sequence[float]], min_support: int = 20
+) -> Dict[str, float]:
+    """Maximum pairwise demographic-parity gap of the positive-decision rate.
+
+    Groups with fewer than ``min_support`` items are excluded from the gap: the
+    statistic is a max over groups, so a handful of samples in a rare category
+    dominates it through sampling noise alone and the column stops measuring
+    disparity.  Excluded groups are still reported under ``group_rates`` so the
+    omission is visible.
+    """
+    means = {g: (sum(v) / len(v)) for g, v in rates_by_group.items() if len(v) > 0}
+    counts = {g: len(v) for g, v in rates_by_group.items() if len(v) > 0}
+    eligible = {g: m for g, m in means.items() if counts[g] >= min_support}
+    if len(eligible) < 2:  # fall back rather than report nothing
+        eligible = means
+    if len(eligible) < 2:
+        return {
+            "dp_gap": float("nan"),
+            "group_rates": means,
+            "group_counts": counts,
+            "n_groups": len(means),
+        }
+    hi, lo = max(eligible.values()), min(eligible.values())
     return {
         "dp_gap": hi - lo,
         "group_rates": means,
-        "n_groups": len(means),
+        "group_counts": counts,
+        "n_groups": len(eligible),
+        "n_groups_seen": len(means),
     }
 
 

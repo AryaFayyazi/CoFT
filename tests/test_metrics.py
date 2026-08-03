@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import math
 
+import pytest
+
 from coft.metrics import (
     average_rank,
     bbq_metrics,
@@ -96,6 +98,25 @@ def test_parity_gap():
     m = parity_gap({"A": [1.0, 1.0, 0.0], "B": [0.0, 0.0, 0.0]})
     assert m["dp_gap"] == 2 / 3
     assert m["n_groups"] == 2
+
+
+def test_parity_gap_ignores_undersupported_groups():
+    """A rare group must not dominate a max-over-groups statistic through noise."""
+    rates = {
+        "A": [1.0] * 40,
+        "B": [0.9] * 40,
+        "rare": [0.0, 0.0],          # 2 samples -- pure noise
+    }
+    m = parity_gap(rates, min_support=20)
+    assert m["dp_gap"] == pytest.approx(0.1)      # A vs B, not A vs rare
+    assert m["n_groups"] == 2
+    assert "rare" in m["group_rates"]             # still reported, just not used
+    assert m["group_counts"]["rare"] == 2
+
+
+def test_parity_gap_falls_back_when_nothing_has_support():
+    m = parity_gap({"A": [1.0], "B": [0.0]}, min_support=20)
+    assert m["dp_gap"] == 1.0
 
 
 def test_parity_gap_single_group_is_nan():

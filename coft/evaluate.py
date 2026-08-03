@@ -56,15 +56,27 @@ def eval_pairs(
 
     bar = tqdm(list(_chunks(list(items), batch_size)), desc=f"{decoder.name}/{kind}", disable=not progress)
     for batch in bar:
-        prompts = [it.context for it in batch]
-        terms = [it.terms for it in batch]
-        s = decoder.score_batch(prompts, [it.stereo for it in batch], terms)
-        a = decoder.score_batch(prompts, [it.anti for it in batch], terms)
+        # Each branch is scored under its *own* prompt: StereoSet shares one
+        # context, CrowS-Pairs conditions each branch on its own modified span.
+        s = decoder.score_batch(
+            [it.ctx_stereo for it in batch],
+            [it.stereo for it in batch],
+            [it.spans_stereo for it in batch],
+        )
+        a = decoder.score_batch(
+            [it.ctx_anti for it in batch],
+            [it.anti for it in batch],
+            [it.spans_anti for it in batch],
+        )
         stereo_scores.extend(_score_key(r, normalize) for r in s)
         anti_scores.extend(_score_key(r, normalize) for r in a)
         coverage.extend(r["coverage"] for r in s if r["coverage"] == r["coverage"])
         if kind == "stereoset" and all(it.unrelated for it in batch):
-            u = decoder.score_batch(prompts, [it.unrelated for it in batch], terms)
+            u = decoder.score_batch(
+                [it.ctx_stereo for it in batch],
+                [it.unrelated for it in batch],
+                [it.spans_stereo for it in batch],
+            )
             unrelated_scores.extend(_score_key(r, normalize) for r in u)
 
     if kind == "stereoset":

@@ -33,6 +33,7 @@ __all__ = [
     "load_json",
     "get_thresholds",
     "build_masker",
+    "apply_selected_hyperparams",
 ]
 
 
@@ -77,6 +78,39 @@ def save_json(path: Path, payload) -> None:
 
 def load_json(path: Path):
     return json.loads(Path(path).read_text())
+
+
+def apply_selected_hyperparams(cfg: Dict, out_dir: Path, verbose: bool = True) -> Dict:
+    """Adopt the ``(lambda, alpha)`` chosen by the validation sweep, if one has run.
+
+    The paper's protocol is to select both knobs on a small validation split by
+    the Pareto-knee rule (Sec. 4.5) and then *use* the selected values for the
+    reported tables -- "COFT uses a single lambda per model (from validation) and
+    per-step conformal thresholds tau_t from split calibration" (Table 1 caption).
+    This reads ``sweeps.json`` and applies it, so running ``run_sweep.py`` before
+    the tables reproduces that protocol end to end.  Without a sweep the config
+    defaults stand.
+    """
+    path = out_dir / "sweeps.json"
+    if not path.exists():
+        return cfg
+    try:
+        payload = json.loads(path.read_text())
+    except Exception:
+        return cfg
+
+    lam = (payload.get("lambda_sweep") or {}).get("chosen")
+    alpha = (payload.get("alpha_sweep") or {}).get("chosen")
+    if lam is not None and lam == lam:
+        cfg.setdefault("methods", {}).setdefault("coft", {})["lam"] = float(lam)
+    if alpha is not None and alpha == alpha:
+        cfg.setdefault("conformal", {})["alpha"] = float(alpha)
+    if verbose and (lam is not None or alpha is not None):
+        print(
+            f"  using validation-selected hyper-parameters from {path.name}: "
+            f"lambda={cfg['methods']['coft']['lam']}, alpha={cfg['conformal']['alpha']}"
+        )
+    return cfg
 
 
 def build_masker(lm: FrozenLM, cfg: Dict) -> Masker:

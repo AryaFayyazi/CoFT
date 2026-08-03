@@ -46,21 +46,25 @@ class DatasetUnavailable(RuntimeError):
     """Raised when a benchmark needs a file we are not allowed to redistribute."""
 
 
-def _shared_prefix_split(a: str, b: str) -> tuple:
-    """Split two minimal-pair sentences into (shared prefix, tail_a, tail_b).
+def _minimal_pair_split(a: str, b: str):
+    """Locate the modified span of a minimal pair.
 
-    CrowS-Pairs sentences differ in only a few tokens; conditioning on the shared
-    prefix and comparing the differing remainders is the standard "modified
-    tokens" framing and is what makes the comparison a *minimal* pair.
+    Returns ``(prefix, mid_a, mid_b, suffix)`` at word granularity: ``prefix``
+    and ``suffix`` are shared by both sentences and ``mid_a`` / ``mid_b`` are the
+    tokens that differ -- the protected span the pair is built around.
     """
     wa, wb = a.split(), b.split()
     i = 0
     while i < min(len(wa), len(wb)) and wa[i] == wb[i]:
         i += 1
-    if i == 0:
-        return "", a, b
-    prefix = " ".join(wa[:i])
-    return prefix, " " + " ".join(wa[i:]), " " + " ".join(wb[i:])
+    j = 0
+    while j < min(len(wa) - i, len(wb) - i) and wa[len(wa) - 1 - j] == wb[len(wb) - 1 - j]:
+        j += 1
+    prefix = wa[:i]
+    suffix = wa[len(wa) - j :] if j else []
+    mid_a = wa[i : len(wa) - j] if j else wa[i:]
+    mid_b = wb[i : len(wb) - j] if j else wb[i:]
+    return prefix, mid_a, mid_b, suffix
 
 
 # --------------------------------------------------------------------------- #
@@ -114,6 +118,16 @@ def load_crows(limit: Optional[int] = None, seed: int = 0, path: Optional[str] =
     question; ``stereo_antistereo`` says whether the pair is a stereotype or an
     anti-stereotype item.  We normalise so that ``stereo`` always holds the
     more-stereotypical sentence.
+
+    Scoring arrangement.  Following Nangia et al., the comparison conditions on
+    the **modified** (identity) tokens and scores the **unmodified** remainder:
+    each sentence is split into ``shared prefix | modified span | shared
+    suffix``, the prompt is ``prefix + modified span`` and the scored
+    continuation is the shared suffix.  Doing it the other way round -- prompt =
+    shared prefix, continuation = differing tail -- puts the protected span in
+    the continuation, which both COFT branches receive verbatim (Sec. 3.1), so
+    the masked probe would be blind to exactly the token the benchmark is about.
+    Items with no shared suffix fall back to comparing the full sentences.
     """
     p = Path(path) if path else raw_data_dir() / "crows_pairs.csv"
     if not p.exists():
@@ -128,21 +142,45 @@ def load_crows(limit: Optional[int] = None, seed: int = 0, path: Optional[str] =
                 continue
             direction = (row.get("stereo_antistereo") or "stereo").strip()
             stereo_sent, anti_sent = (more, less) if direction == "stereo" else (less, more)
-            prefix, tail_s, tail_a = _shared_prefix_split(stereo_sent, anti_sent)
-            items.append(
-                PairItem(
-                    context=prefix,
-                    stereo=tail_s,
-                    anti=tail_a,
-                    bias_type=(row.get("bias_type") or "unknown").strip(),
-                    meta={
-                        "direction": direction,
-                        "sent_more": more,
-                        "sent_less": less,
-                        "source": "crows",
-                    },
+            prefix, mid_s, mid_a, suffix = _minimal_pair_split(stereo_sent, anti_sent)
+
+            meta = {
+                "direction": direction,
+                "sent_more": more,
+                "sent_less": less,
+                "modified_stereo": " ".join(mid_s),
+                "modified_anti": " ".join(mid_a),
+                "source": "crows",
+            }
+            if suffix and (mid_s or mid_a):
+                # condition on the modified span, score the shared remainder
+                ctx_s = " ".join(prefix + mid_s)
+                ctx_a = " ".join(prefix + mid_a)
+                cont = " " + " ".join(suffix)
+                items.append(
+                    PairItem(
+                        context=ctx_s,
+                        stereo=cont,
+                        anti=cont,
+                        stereo_context=ctx_s,
+                        anti_context=ctx_a,
+                        stereo_terms=[" ".join(mid_s)] if mid_s else [],
+                        anti_terms=[" ".join(mid_a)] if mid_a else [],
+                        bias_type=(row.get("bias_type") or "unknown").strip(),
+                        meta={**meta, "arrangement": "modified-as-prompt"},
+                    )
                 )
-            )
+            else:
+                # no shared suffix: fall back to comparing the whole sentences
+                items.append(
+                    PairItem(
+                        context="",
+                        stereo=stereo_sent,
+                        anti=anti_sent,
+                        bias_type=(row.get("bias_type") or "unknown").strip(),
+                        meta={**meta, "arrangement": "full-sentence"},
+                    )
+                )
     return subsample(items, limit, seed)
 
 

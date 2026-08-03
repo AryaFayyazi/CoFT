@@ -23,7 +23,16 @@ import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from _common import base_parser, build_masker, get_thresholds, results_dir, save_json, set_seed, setup
+from _common import (
+    apply_selected_hyperparams,
+    base_parser,
+    build_masker,
+    get_thresholds,
+    results_dir,
+    save_json,
+    set_seed,
+    setup,
+)
 
 from coft.data.base import attach_terms
 from coft.data.bias import DatasetUnavailable, load_bold
@@ -97,6 +106,7 @@ def main() -> int:
 
     cfg, lm = setup(args)
     out_dir = results_dir(cfg, args)
+    cfg = apply_selected_hyperparams(cfg, out_dir)
     masker = build_masker(lm, cfg)
     ecfg = cfg["efficiency"]
     set_seed(0)
